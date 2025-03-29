@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-  </script>
+</script>
 
 <template>
   <AppLayout>
@@ -29,7 +29,9 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 
                   <v-text-field label="Password" type="password" variant="outlined"></v-text-field>
 
-                  <v-btn class="mt-2" type="submit" block>Submit</v-btn>
+                  <v-btn class="mt-2" type="submit" prepend-icon="mdi mdi-login-variant" block
+                    >LOGIN</v-btn
+                  >
                 </v-form>
                 <v-divider class="my-5"></v-divider>
 

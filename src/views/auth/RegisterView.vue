@@ -33,7 +33,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
                   variant="outlined"
                 ></v-text-field>
 
-                <v-btn class="mt-2" type="submit" block>Submit</v-btn>
+                <v-btn class="mt-2" type="submit" prepend-icon="mdi mdi-account-plus-outline" block>Submit</v-btn>
 
                 <v-divider class="my-5"></v-divider>
 
