@@ -1,55 +1,47 @@
 <script setup>
-import { ref } from 'vue'
-
-const theme = ref('light')
-
-function onClick() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
-}
-</script>
+import AppLayout from '@/components/layout/AppLayout.vue'
+  </script>
 
 <template>
-  <v-responsive class="border rounded">
-    <v-app :theme="theme">
-      <v-app-bar class="px-3">
-        <v-spacer></v-spacer>
+  <AppLayout>
+    <template #content>
+      <v-container>
+        <br />
+        <br />
+        <br />
+        <br />
+        <v-row class="d-flex justify-center">
+          <v-col cols="12" md="6">
+            <v-card
+              class="mx-auto rounded-lg"
+              style="background: linear-gradient(180deg, #4facfe, #00f2fe)"
+              prepend-icon="mdi mdi-login"
+              subtitle="Login"
+              elevation="24"
+            >
+              <template v-slot:title>
+                <span class="font-weight-black">Welcome to QuickWork</span>
+              </template>
+              <v-divider></v-divider>
+              <v-card-text class="pt-4">
+                <v-form fast-fail @submit.prevent>
+                  <v-text-field label="Email" variant="outlined"></v-text-field>
 
-        <v-btn
-          :prepend-icon="theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'"
-          text="Toggle Theme"
-          slim
-          @click="onClick"
-        ></v-btn>
-      </v-app-bar>
+                  <v-text-field label="Password" type="password" variant="outlined"></v-text-field>
 
-      <v-main>
-        <v-container>
-          <v-row class = "d-flex justify-center">
-            <v-col cols="12" md="6">
-              <v-card class="mx-auto rounded-lg" prepend-icon="mdi mdi-account-circle" subtitle="Login">
-                <template v-slot:title>
-                  <span class="font-weight-black">Welcome to QuickWork</span>
-                </template>
+                  <v-btn class="mt-2" type="submit" block>Submit</v-btn>
+                </v-form>
+                <v-divider class="my-5"></v-divider>
 
-                <v-card-text class="bg-surface-light pt-4">
-                  <v-form fast-fail @submit.prevent>
-                    <v-text-field label="Email" variant="outlined"></v-text-field>
-
-                    <v-text-field label="Password" type="password" variant="outlined"></v-text-field>
-
-                    <v-btn class="mt-2" type="submit" block>Submit</v-btn>
-                  </v-form>
-                  <v-divider class="my-5"></v-divider>
-
-                  <h5 class="text-center ">Don't have an account? <Router-link to="/register">Click Here to Register</Router-link></h5>
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-main>
-
-      <v-footer border app>Quickwork 2025</v-footer>
-    </v-app>
-  </v-responsive>
+                <h5 class="text-center">
+                  Don't have an account?
+                  <Router-link to="/register">Click Here to Register</Router-link>
+                </h5>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
+    </template>
+  </AppLayout>
 </template>
