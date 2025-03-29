@@ -24,9 +24,13 @@ function onClick() {
 
       <v-main>
         <v-container>
-          <v-row class = "d-flex justify-center">
+          <v-row class="d-flex justify-center">
             <v-col cols="12" md="6">
-              <v-card class="mx-auto rounded-lg" prepend-icon="mdi mdi-account-circle" subtitle="Login">
+              <v-card
+                class="mx-auto rounded-lg"
+                prepend-icon="mdi mdi-account-circle"
+                subtitle="Login"
+              >
                 <template v-slot:title>
                   <span class="font-weight-black">Welcome to QuickWork</span>
                 </template>
@@ -35,13 +39,14 @@ function onClick() {
                   <v-form fast-fail @submit.prevent>
                     <v-text-field label="Email" variant="outlined"></v-text-field>
 
-                    <v-text-field label="Password" type="password" variant="outlined"></v-text-field>
+                    <v-text-field
+                      label="Password"
+                      type="password"
+                      variant="outlined"
+                    ></v-text-field>
 
                     <v-btn class="mt-2" type="submit" block>Submit</v-btn>
                   </v-form>
-                  <v-divider class="my-5"></v-divider>
-
-                  <h5 class="text-center ">Don't have an account? <Router-link to="/register">Click Here to Register</Router-link></h5>
                 </v-card-text>
               </v-card>
             </v-col>
