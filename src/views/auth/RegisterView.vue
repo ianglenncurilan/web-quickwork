@@ -39,7 +39,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 
                 <h5 class="text-center">
                   Already have an account?
-                  <Router-link to="/login">Click Here to Login</Router-link>
+                  <Router-link to="/">Click Here to Login</Router-link>
                 </h5>
               </v-form>
             </v-card-text>
