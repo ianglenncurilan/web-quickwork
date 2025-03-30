@@ -5,10 +5,9 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 <template>
   <AppLayout>
     <template #content>
-      <v-row class="d-flex justify-center f">
+      <v-row class="d-flex justify-center f" style="background-color: #e3f2fd; min-height: 100vh; padding: 20px;">
         <v-col cols="12" md="6">
           <v-card
-            style="background: linear-gradient(180deg, #4facfe, #00f2fe)"
             class="mx-auto rounded-lg"
             prepend-icon="mdi mdi-account-box-plus-outline"
             subtitle="Sign up"
@@ -33,7 +32,8 @@ import AppLayout from '@/components/layout/AppLayout.vue'
                   variant="outlined"
                 ></v-text-field>
 
-                <v-btn class="mt-2" type="submit" prepend-icon="mdi mdi-account-plus-outline" block>Submit</v-btn>
+                <v-container><v-btn class="mt-2 bg-info" type="submit" prepend-icon="mdi mdi-account-plus-outline" block>Submit</v-btn>
+                </v-container>
 
                 <v-divider class="my-5"></v-divider>
 
