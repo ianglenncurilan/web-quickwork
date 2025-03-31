@@ -19,7 +19,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
               style="background-color: #007bff; color: white; padding: 2rem"
             >
               <h3 class="font-weight-bold text-center">New Here?</h3>
-              <p class="text-center">Sign up and discover a great amount of new opportunities!</p>
+              <p class="text-center">Sign up and discover a great amount of new work opportunities!</p>
               <v-btn color="white" outlined class="mt-2" to="/register">SIGN UP</v-btn>
             </v-col>
 

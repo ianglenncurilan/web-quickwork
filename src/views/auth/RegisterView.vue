@@ -17,7 +17,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
               class="d-flex flex-column align-center justify-center"
               style="background-color: #007bff; color: white; padding: 2rem"
             >
-              <h3 class="font-weight-bold text-center">Already Signed up?</h3>
+              <h3 class="font-weight-bold text-center">Already had an Acoount ?</h3>
               <p class="text-center">
                 Log in to your account so you can continue building and editing your onboarding
                 flows.
