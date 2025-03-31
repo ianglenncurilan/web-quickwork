@@ -19,8 +19,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
             >
               <h3 class="font-weight-bold text-center">Already had an Acoount ?</h3>
               <p class="text-center">
-                Log in to your account so you can continue building and editing your onboarding
-                flows.
+                Log in to your Quickwork account to explore and apply for part-time job opportunities.
               </p>
               <v-btn color="white" outlined class="mt-2" to="/">LOG IN</v-btn>
             </v-col>
@@ -29,7 +28,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
             <v-col cols="12" md="7" class="pa-5">
               <h3 class="font-weight-bold text-center">Sign Up for an Account</h3>
               <p class="text-center my-4">
-                Let's get you all set up so you can start creating your first onboarding experience.
+                Sign up for a Quickwork account and start your part-time job hunt today!
               </p>
               <v-form fast-fail @submit.prevent>
                 <v-row>
@@ -53,7 +52,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
                   variant="outlined"
                   required
                 ></v-text-field>
-                <v-checkbox label="I Accept Terms & Conditions" required></v-checkbox>
+                <v-checkbox label="Agree to Terms & Conditions" required></v-checkbox>
                 <v-btn color="primary" type="submit" block>SIGN UP</v-btn>
               </v-form>
               <div class="text-center mt-4">
