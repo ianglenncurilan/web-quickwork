@@ -48,7 +48,7 @@ const showPassword = ref(false)
                   <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit">LOGIN</v-btn>
                 </div>
                 <div class="text-center mt-2">
-                  <Router-link to="/forgot-password" class="forgot-password-link">Forgot Password?</Router-link>
+                 Forgot Password?
                 </div>
               </v-form>
               <div class="text-center mt-4">
