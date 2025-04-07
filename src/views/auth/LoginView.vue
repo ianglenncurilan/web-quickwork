@@ -87,7 +87,7 @@ const showPassword = ref(false)
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
-  background-image: url('@/assets/background-pattern.png'); /* Background image */
+
   background-size: cover;
   background-position: center;
   text-align: center;
