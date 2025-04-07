@@ -1,6 +1,8 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
+import heh from '@/assets/heh.png'
+
 
 const showPassword = ref(false)
 </script>
@@ -20,6 +22,7 @@ const showPassword = ref(false)
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
             >
+            <img :src="heh" alt="yawa" height="300px" width="300px" />
               <h3 class="font-weight-bold text-center">New Here?</h3>
               <p class="text-center">Sign up and discover a great amount of new opportunities!</p>
               <v-btn color="white" outlined class="mt-2" to="/register">SIGN UP</v-btn>
@@ -73,7 +76,7 @@ const showPassword = ref(false)
 }
 
 .new-here-section {
-  background-color: #00412E;
+  background-color: #6ae3bf;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
