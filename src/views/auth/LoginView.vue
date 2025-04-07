@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
+import quickieLogo from '@/assets/quickie.png'
 
 const showPassword = ref(false)
 </script>
@@ -20,6 +21,7 @@ const showPassword = ref(false)
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
             >
+              <img src="@/assets/quickie.png" alt="Quickie Logo" class="logo" width="200px" height="200px"/>
               <h3 class="font-weight-bold text-center">New Here?</h3>
               <p class="text-center">Sign up and discover a great amount of new opportunities!</p>
               <v-btn color="white" outlined class="mt-2" to="/register">SIGN UP</v-btn>
@@ -69,6 +71,12 @@ const showPassword = ref(false)
 </template>
 
 <style scoped>
+.logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
 .btn-fixed-width {
   width: 200px;
 }

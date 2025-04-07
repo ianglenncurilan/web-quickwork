@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
+import quickieLogo from '@/assets/quickie.png'
 
 const showPassword = ref(false)
 </script>
@@ -20,6 +21,7 @@ const showPassword = ref(false)
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
             >
+            <img src="@/assets/quickie.png" alt="Quickie Logo" class="logo mb-5" width="200px" height="200px"/>
               <h3 class="font-weight-bold text-center">Already Signed up?</h3>
               <p class="text-center">
                 Log in to your account so you can continue building and editing your onboarding flows.
