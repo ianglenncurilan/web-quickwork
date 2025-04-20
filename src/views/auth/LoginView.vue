@@ -20,6 +20,14 @@ const showPassword = ref(false)
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
             >
+            <img
+                src="@/assets/quickie.png"
+                alt="Quickie Logo"
+                class="logo"
+                width="200px"
+                height="200px"
+              />
+              
               <h3 class="font-weight-bold text-center">New Here?</h3>
               <p class="text-center">Sign up and discover a great amount of new opportunities!</p>
               <v-btn color="white" outlined class="mt-2" to="/register">SIGN UP</v-btn>
@@ -42,7 +50,7 @@ const showPassword = ref(false)
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit">LOGIN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post">LOGIN</v-btn>
                 </div>
                 <div class="text-center mt-2">
                   <Router-link to="/forgot-password" class="forgot-password-link">Forgot Password?</Router-link>

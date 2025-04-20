@@ -14,12 +14,21 @@ const showPassword = ref(false)
       >
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
+            
             <!-- Left Section - Sign Up Prompt -->
             <v-col
               cols="12"
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
             >
+            <img
+                src="@/assets/quickie.png"
+                alt="Quickie Logo"
+                class="logo"
+                width="200px"
+                height="200px"
+              />
+              
               <h3 class="font-weight-bold text-center">Already Signed up?</h3>
               <p class="text-center">Log in to your account so you can continue building and editing your onboarding flows.</p>
               <v-btn color="white" outlined class="mt-2" to="/register">LOGIN</v-btn>
