@@ -14,7 +14,7 @@ const showPassword = ref(false)
       >
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
-            
+
             <!-- Left Section - Sign Up Prompt -->
             <v-col
               cols="12"
@@ -28,10 +28,10 @@ const showPassword = ref(false)
                 width="200px"
                 height="200px"
               />
-              
+
               <h3 class="font-weight-bold text-center">Already Signed up?</h3>
               <p class="text-center">Log in to your account so you can continue building and editing your onboarding flows.</p>
-              <v-btn color="white" outlined class="mt-2" to="/register">LOGIN</v-btn>
+              <v-btn color="white" outlined class="mt-2" to="/">LOGIN</v-btn>
             </v-col>
 
             <!-- Right Section - Login Form -->
@@ -39,7 +39,7 @@ const showPassword = ref(false)
               <div class="ribbon-container">
                 <h3 class="ribbon-text">Sign Up for an Account</h3>
               </div><br>
-              
+
               <v-form fast-fail @submit.prevent>
                 <v-row>
                   <v-col cols="12" md="6">
@@ -85,9 +85,9 @@ const showPassword = ref(false)
                 ></v-checkbox>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit">LOG IN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/">LOG IN</v-btn>
                 </div>
-                
+
               </v-form>
               <div class="text-center mt-4">
                 <p class="my-4">Or</p>
@@ -96,7 +96,7 @@ const showPassword = ref(false)
                 <v-btn icon class="mx-2"><v-icon color="light-blue">mdi-twitter</v-icon></v-btn>
               </div>
               <v-divider class="my-4"></v-divider>
-              
+
             </v-col>
           </v-row>
         </v-card>

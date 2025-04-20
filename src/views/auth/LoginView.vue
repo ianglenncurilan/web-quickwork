@@ -1,17 +1,33 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
+import { requiredValidator, emailValidator } from '@/utils/validators'
 import { ref } from 'vue'
 
 const showPassword = ref(false)
+const refVform = ref()
+
+const formDataDefault = {
+  email: '',
+  password: '',
+}
+
+const formData = ref({
+  ...formDataDefault,
+})
+const onLogin = () => {
+ alert(formData.value)
+}
+const onFormSubmit = () => {
+  refVform.value?.validate().then(({ valid: isValid }) => {
+    if (isValid) onLogin()
+  })
+}
 </script>
 
 <template>
   <AppLayout>
     <template #content>
-      <v-container
-        class="d-flex align-center justify-center"
-        style=" min-height: 80vh"
-      >
+      <v-container class="d-flex align-center justify-center" style="min-height: 80vh">
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
             <!-- Left Section - Sign Up Prompt -->
@@ -20,7 +36,7 @@ const showPassword = ref(false)
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
             >
-            <img
+              <img
                 src="@/assets/quickie.png"
                 alt="Quickie Logo"
                 class="logo"
@@ -36,23 +52,35 @@ const showPassword = ref(false)
             <v-col cols="12" md="7" class="pa-5">
               <div class="ribbon-container">
                 <h3 class="ribbon-text">Welcome to Quickwork!</h3>
-              </div><br>
+              </div>
+              <br />
               <p class="text-center my-2">Log in to your account to continue</p>
-              <v-form fast-fail @submit.prevent>
-                <v-text-field label="Email" variant="outlined" required></v-text-field>
+              <v-form ref="ref" fast-fail @submit.prevent="onFormSubmit">
                 <v-text-field
+                  v-model="formData.email"
+                  label="Email"
+                  variant="outlined"
+                  :rules="[requiredValidator, emailValidator]"
+                ></v-text-field>
+                <v-text-field
+                  v-model="formData.password"
                   label="Password"
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
+                  :rules="[requiredValidator]"
                 ></v-text-field>
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post">LOGIN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post"
+                    >LOGIN</v-btn
+                  >
                 </div>
                 <div class="text-center mt-2">
-                  <Router-link to="/forgot-password" class="forgot-password-link">Forgot Password?</Router-link>
+                  <Router-link to="/forgot-password" class="forgot-password-link"
+                    >Forgot Password?</Router-link
+                  >
                 </div>
               </v-form>
               <div class="text-center mt-4">
@@ -80,7 +108,7 @@ const showPassword = ref(false)
 }
 
 .new-here-section {
-  background-color: #00412E;
+  background-color: #00412e;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
@@ -109,7 +137,7 @@ const showPassword = ref(false)
 
 .new-here-section .v-btn:hover {
   background-color: white;
-  color: #00412E;
+  color: #00412e;
 }
 
 .ribbon-container {
@@ -117,7 +145,7 @@ const showPassword = ref(false)
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  background-color: #00412E; /* Ribbon background color */
+  background-color: #00412e; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
@@ -141,17 +169,17 @@ const showPassword = ref(false)
 .ribbon-container::before {
   left: 0;
   border-width: 10px 10px 0 0;
-  border-color: #00412E transparent transparent transparent;
+  border-color: #00412e transparent transparent transparent;
 }
 
 .ribbon-container::after {
   right: 0;
   border-width: 10px 0 0 10px;
-  border-color: #00412E transparent transparent transparent;
+  border-color: #00412e transparent transparent transparent;
 }
 
 .forgot-password-link {
-  color: #00412E;
+  color: #00412e;
   font-size: 0.9rem;
   text-decoration: none;
   transition: color 0.3s ease;
@@ -162,4 +190,3 @@ const showPassword = ref(false)
   text-decoration: underline;
 }
 </style>
-
