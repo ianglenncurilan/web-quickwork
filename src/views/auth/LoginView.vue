@@ -71,7 +71,7 @@ function handleLogin() {
                   label="Email"
                   variant="outlined"
                   required
-                  :rules="[emailValidator]"
+                  :rules="[requiredValidator, emailValidator]"
                 ></v-text-field>
                 <v-text-field
                   v-model="formData.password"
