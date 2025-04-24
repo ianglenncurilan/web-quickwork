@@ -257,13 +257,12 @@ const filteredJobs = computed(() => {
                 class="mb-4"
                 required
               />
-              <v-textarea
+              <v-text-field
                 v-model="jobForm.description"
                 clearable
                 label="Job Description"
                 variant="solo-filled"
-                auto-grow
-                rows="3"
+              
                 class="mb-4"
                 required
               />
@@ -304,7 +303,7 @@ const filteredJobs = computed(() => {
               
 
               <v-btn
-                color="teal-darken-2"
+                color="#328E6E"
                 class="rounded-pill px-6 py-3 text-white text-capitalize"
                 elevation="2"
                 block
@@ -374,20 +373,14 @@ const filteredJobs = computed(() => {
 
 <style scoped>
 .fill-screen {
-  height: 100vh;
+  height: 150vh;
   
-}
-
-.scrollable-column {
-  max-height: 100vh;
-  overflow-y: auto;
-  padding-right: 12px;
 }
 
 .sticky-card {
   position: sticky;
   top: 0;
-  background-color: #F2E7C4; /* Replace with your desired color */
+  background-color: #E1EEBC; /* Replace with your desired color */
   padding: 10px; /* Optional: Add padding for better spacing */
   border-radius: 10px; /* Optional: Add rounded corners */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow effect */
@@ -396,18 +389,18 @@ const filteredJobs = computed(() => {
 }
 
 .close-btn {
-  width: 28px; /* Smaller width */
-  height: 28px; /* Smaller height */
+  width: 15px; /* Smaller width */
+  height: 25px; /* Smaller height */
   border-radius: 4px; /* Keeps the button square */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #00796b; /* Same as teal-darken-2 */
+  background-color: #328E6E; /* Same as teal-darken-2 */
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .close-btn:hover {
-  background-color: #00796b; /* Slightly lighter teal on hover */
+  background-color: #328E6E; /* Slightly lighter teal on hover */
   transform: scale(1.1); /* Slight zoom effect on hover */
 }
 
@@ -420,7 +413,7 @@ const filteredJobs = computed(() => {
 }
 
 .custom-green-bg {
-  background-color: #F2E7C4; /* Replace with your desired color */
+  background-color: #E1EEBC; /* Replace with your desired color */
   border: 1px solid #F2E7C4; /* Optional: Add a border for better visibility */
   border-radius: 8px; /* Keep the rounded corners */
   padding: 16px; /* Adjust padding if needed */
@@ -428,7 +421,7 @@ const filteredJobs = computed(() => {
 
 .ribbon-container {
   position: relative;
-  background-color: #00796b; /* Ribbon background color */
+  background-color: #328E6E; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   text-align: center;
@@ -436,28 +429,6 @@ const filteredJobs = computed(() => {
   border-radius: 5px 5px 0 0; /* Rounded top corners */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
   margin-bottom: 1rem;
-}
-
-.ribbon-container::before,
-.ribbon-container::after {
-  content: '';
-  position: absolute;
-  top: 100%; /* Position below the ribbon */
-  width: 0;
-  height: 0;
-  border-style: solid;
-}
-
-.ribbon-container::before {
-  left: 0;
-  border-width: 10px 10px 0 0;
-  border-color: #00796b transparent transparent transparent;
-}
-
-.ribbon-container::after {
-  right: 0;
-  border-width: 10px 0 0 10px;
-  border-color: #00796b transparent transparent transparent;
 }
 
 .ribbon-text {
@@ -487,7 +458,7 @@ const filteredJobs = computed(() => {
   position: absolute;
   top: 350px;
   right: 10px; /* Adjusted to keep the button fully inside the sidebar */
-  background-color: #00796b;
+  background-color: #328E6E;
   color: white;
   border: none;
   border-radius: 50%;
@@ -597,17 +568,16 @@ const filteredJobs = computed(() => {
   outline: none;
   background: transparent;
   font-size: 16px;
-  padding: 10px;
 }
 
 /* Search Button */
 .search-button {
-  background-color: #00796b;
+  background-color: #328E6E;
   border: none;
   border-radius: 50%;
   color: white;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
