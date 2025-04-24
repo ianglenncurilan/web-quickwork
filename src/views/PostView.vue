@@ -202,6 +202,12 @@ const filteredJobs = computed(() => {
                       <span v-if="!isSidebarCollapsed">Review</span>
                     </a>
                   </li>
+                  <li>
+                    <a href="/home">
+                      <i class="icon mdi mdi-briefcase-outline"></i>
+                      <span v-if="!isSidebarCollapsed">Job Posted</span>
+                    </a>
+                  </li>
                   
                   <li>
                     <a href="/">
