@@ -202,7 +202,7 @@ const filteredJobs = computed(() => {
                       <span v-if="!isSidebarCollapsed">Review</span>
                     </a>
                   </li>
-                  
+
                   <li>
                     <a href="/">
                       <i class="icon mdi mdi-logout" style="color: red;"></i>
@@ -233,7 +233,7 @@ const filteredJobs = computed(() => {
             <!-- Job Form (Middle) -->
             <v-card
               v-if="isFormVisible"
-              class="pa-4 mb-6 rounded-xl custom-green-bg"
+              class="pa-4 mb-6 rounded-xl"
               elevation="1"
               flat
             >
@@ -299,9 +299,7 @@ const filteredJobs = computed(() => {
                 accept="image/*"
                 prepend-icon="mdi-camera"
               />
-            
-              
-              
+
 
               <v-btn
                 color="teal-darken-2"
@@ -324,7 +322,7 @@ const filteredJobs = computed(() => {
                   class="d-flex"
                   @click="showJobDetails(job)"
                 >
-                  <v-card class="pa-4 rounded-xl w-100" elevation="3">
+                <v-card class="pa-4 rounded-xl w-100 job-card-hover" elevation="3">
                     <v-row no-gutters align="center">
                       <v-col cols="auto">
                         <v-img
@@ -375,7 +373,7 @@ const filteredJobs = computed(() => {
 <style scoped>
 .fill-screen {
   height: 100vh;
-  
+
 }
 
 .scrollable-column {
@@ -384,16 +382,6 @@ const filteredJobs = computed(() => {
   padding-right: 12px;
 }
 
-.sticky-card {
-  position: sticky;
-  top: 0;
-  background-color: #F2E7C4; /* Replace with your desired color */
-  padding: 10px; /* Optional: Add padding for better spacing */
-  border-radius: 10px; /* Optional: Add rounded corners */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow effect */
-  margin-top: 25px;
-  
-}
 
 .close-btn {
   width: 28px; /* Smaller width */
@@ -402,12 +390,12 @@ const filteredJobs = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #00796b; /* Same as teal-darken-2 */
+  background-color: #328E6E; /* Same as teal-darken-2 */
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .close-btn:hover {
-  background-color: #00796b; /* Slightly lighter teal on hover */
+  background-color: #328E6E; /* Slightly lighter teal on hover */
   transform: scale(1.1); /* Slight zoom effect on hover */
 }
 
@@ -420,15 +408,15 @@ const filteredJobs = computed(() => {
 }
 
 .custom-green-bg {
-  background-color: #F2E7C4; /* Replace with your desired color */
-  border: 1px solid #F2E7C4; /* Optional: Add a border for better visibility */
+  background-color: #90C67C; /* Replace with your desired color */
+  border: 1px solid #90C67C; /* Optional: Add a border for better visibility */
   border-radius: 8px; /* Keep the rounded corners */
   padding: 16px; /* Adjust padding if needed */
 }
 
 .ribbon-container {
   position: relative;
-  background-color: #00796b; /* Ribbon background color */
+  background-color: #328E6E;
   color: white;
   padding: 0.5rem 2rem;
   text-align: center;
@@ -438,27 +426,7 @@ const filteredJobs = computed(() => {
   margin-bottom: 1rem;
 }
 
-.ribbon-container::before,
-.ribbon-container::after {
-  content: '';
-  position: absolute;
-  top: 100%; /* Position below the ribbon */
-  width: 0;
-  height: 0;
-  border-style: solid;
-}
 
-.ribbon-container::before {
-  left: 0;
-  border-width: 10px 10px 0 0;
-  border-color: #00796b transparent transparent transparent;
-}
-
-.ribbon-container::after {
-  right: 0;
-  border-width: 10px 0 0 10px;
-  border-color: #00796b transparent transparent transparent;
-}
 
 .ribbon-text {
   margin: 0;
@@ -468,7 +436,7 @@ const filteredJobs = computed(() => {
 /* Sidebar Styles */
 .sidebar {
   width: 350px;
-  background-color: #F2E7C4;
+  background-color: #E1EEBC;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -623,4 +591,15 @@ const filteredJobs = computed(() => {
 .search-button:active {
   transform: scale(0.95);
 }
+
+.job-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.job-card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
 </style>
