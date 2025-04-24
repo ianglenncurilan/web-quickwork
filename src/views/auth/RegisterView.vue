@@ -85,7 +85,7 @@ const showPassword = ref(false)
                 ></v-checkbox>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="student">LOG IN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#328E6E" type="submit" to="student">SIGN UP</v-btn>
                 </div>
 
               </v-form>
@@ -111,7 +111,7 @@ const showPassword = ref(false)
 }
 
 .new-here-section {
-  background-color: #00412E;
+  background-color: #328E6E;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
@@ -148,7 +148,7 @@ const showPassword = ref(false)
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  background-color: #00412E; /* Ribbon background color */
+  background-color: #328E6E; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
@@ -172,24 +172,12 @@ const showPassword = ref(false)
 .ribbon-container::before {
   left: 0;
   border-width: 10px 10px 0 0;
-  border-color: #00412E transparent transparent transparent;
+  border-color: #328E6E transparent transparent transparent;
 }
 
 .ribbon-container::after {
   right: 0;
   border-width: 10px 0 0 10px;
-  border-color: #00412E transparent transparent transparent;
-}
-
-.forgot-password-link {
-  color: #00412E;
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.forgot-password-link:hover {
-  color: #007bff; /* Change color on hover */
-  text-decoration: underline;
+  border-color: #328E6E transparent transparent transparent;
 }
 </style>

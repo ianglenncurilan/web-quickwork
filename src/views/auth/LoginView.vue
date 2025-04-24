@@ -97,7 +97,7 @@ function handleLogin() {
                 </div>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post">LOGIN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#328E6E" type="submit" to="/post">LOGIN</v-btn>
                 </div>
                 <div class="text-center mt-2">
                   <Router-link to="/forgot-password" class="forgot-password-link"
@@ -130,7 +130,7 @@ function handleLogin() {
 }
 
 .new-here-section {
-  background-color: #00412e;
+  background-color: #328E6E;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
@@ -154,7 +154,7 @@ function handleLogin() {
 .new-here-section .v-btn {
   font-weight: bold;
   border: 2px solid white;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .new-here-section .v-btn:hover {
@@ -167,7 +167,7 @@ function handleLogin() {
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  background-color: #00412e; /* Ribbon background color */
+  background-color: #328E6E; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
@@ -191,13 +191,13 @@ function handleLogin() {
 .ribbon-container::before {
   left: 0;
   border-width: 10px 10px 0 0;
-  border-color: #00412e transparent transparent transparent;
+  border-color: #328E6E transparent transparent transparent;
 }
 
 .ribbon-container::after {
   right: 0;
   border-width: 10px 0 0 10px;
-  border-color: #00412e transparent transparent transparent;
+  border-color: #328E6E transparent transparent transparent;
 }
 
 .forgot-password-link {
