@@ -17,12 +17,12 @@ const routes = [
   },
   {
     path: '/post',
-    name: 'PostView',
+    name: 'post',
     component: PostView,
   },
   {
     path: '/student',
-    name: 'StudentView',
+    name: 'student',
     component: StudentView,
   },
 ];

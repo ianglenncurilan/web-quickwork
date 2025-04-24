@@ -85,7 +85,7 @@ const showPassword = ref(false)
                 ></v-checkbox>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/">LOG IN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="student">LOG IN</v-btn>
                 </div>
 
               </v-form>

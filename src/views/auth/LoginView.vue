@@ -4,7 +4,34 @@ import { requiredValidator, emailValidator } from '@/utils/validators'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const showPassword = ref(false)
+
+// Define formData object
+const formData = ref({
+  email: '',
+  password: '',
+})
+
+// Define selectedRole for the dropdown
+const selectedRole = ref('')
+
+// Handle form submission
+function handleLogin() {
+  if (!formData.value.email || !formData.value.password || !selectedRole.value) {
+    alert('Please fill in all fields and select a role.')
+    return
+  }
+
+  // Navigate to a specific route based on the selected role
+  if (selectedRole.value === 'Student') {
+    router.push('/student')
+  } else if (selectedRole.value === 'Businessman') {
+    router.push('/post')
+  } else {
+    alert('Invalid role selected.')
+  }
+}
 </script>
 
 <template>
@@ -38,8 +65,14 @@ const showPassword = ref(false)
               </div>
               <br />
               <p class="text-center my-2">Log in to your account to continue</p>
-              <v-form fast-fail @submit.prevent>
-                <v-text-field label="Email" variant="outlined" required></v-text-field>
+              <v-form fast-fail @submit.prevent="handleLogin">
+                <v-text-field
+                  v-model="formData.email"
+                  label="Email"
+                  variant="outlined"
+                  required
+                  :rules="[emailValidator]"
+                ></v-text-field>
                 <v-text-field
                   v-model="formData.password"
                   label="Password"
