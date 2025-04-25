@@ -71,7 +71,7 @@ function handleLogin() {
                   label="Email"
                   variant="outlined"
                   required
-                  :rules="[emailValidator]"
+                  :rules="[v => !!v || 'Email is required']"
                 ></v-text-field>
                 <v-text-field
                   v-model="formData.password"
@@ -81,7 +81,7 @@ function handleLogin() {
                   required
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
-                  :rules="[requiredValidator]"
+                  :rules="[v => !!v || 'Password is required']"
                 ></v-text-field>
 
                 <!-- Dropdown for selecting role -->
