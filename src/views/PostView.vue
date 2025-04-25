@@ -529,7 +529,7 @@ const filteredJobs = computed(() => {
 }
 
 .navigation-menu a:hover {
-  background-color: #fff;
+  background-color: #00796b;
 }
 
 .icon {
