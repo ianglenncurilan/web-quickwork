@@ -19,16 +19,22 @@ const formData = ref({
 
 const refVform = ref()
 
-const onFormSubmit = () => {
-  refVform.value?.validate().then (({valid: isValid}) => {
-    //if (isValid) onSubmit()
-  })
-}
 
 
 // Define roles and selectedRole for the dropdown
 const roles = ref(['Student', 'Businessman'])
 const selectedRole = ref('')
+
+const onFormSubmit = () => {
+  refVform.value?.validate().then (({valid: isValid}) => {
+  if (isValid) {
+    handleLogin()
+  }else{
+    console.error('Form validation failed')
+  }
+  })
+  }
+
 
 // Handle form submission
 function handleLogin() {
@@ -97,7 +103,7 @@ function handleLogin() {
                   :rules="[requiredValidator, passwordValidator]"
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
-                  :rules="[requiredValidator]"
+                
                 ></v-text-field>
 
                 <!-- Dropdown for selecting role -->
