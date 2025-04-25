@@ -3,6 +3,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
 import { requiredValidator, emailValidator, passwordValidator } from '@/utils/validators'
 import { useRouter } from 'vue-router'
+import { supabase, formActionDefault } from '@/utils/supabase.js'
 
 const router = useRouter()
 
@@ -18,10 +19,15 @@ const formData = ref({
   ...formDataDefault.value
 })
 
-const showPassword = ref(false)
+const formAction = ref({
+  ...formActionDefault
+})
+
+const isPasswordVisible = ref(false)
+const refVform = ref()
 
 // Handle form submission
-function handleRegister() {
+const handleRegister = async () => {
   if (!formData.value.firstname || !formData.value.lastname || !formData.value.email || !formData.value.password || !formData.value.password_confirmation) {
     alert('Please fill in all fields.')
     return
@@ -32,14 +38,66 @@ function handleRegister() {
     return
   }
 
-  // Navigate to the student page after successful registration
-  router.push('/student')
+  formAction.value = {
+    ...formActionDefault
+  }
+  formAction.value.formProcess = true
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.value.email,
+      password: formData.value.password,
+      options: {
+        data: {
+          firstname: formData.value.firstname,
+          lastname: formData.value.lastname
+        }
+      }
+    })
+
+    if (error) {
+      console.error(error)
+      formAction.value.formErrorMessage = error.message
+      formAction.value.formStatus = error.status
+    } else if (data) {
+      console.log(data)
+      formAction.value.formSuccessMessage = 'Registration successful!'
+      router.push('/student') // Navigate to the student page after successful registration
+    }
+  } catch (err) {
+    console.error('Unexpected error:', err)
+    formAction.value.formErrorMessage = 'An unexpected error occurred.'
+  } finally {
+    formAction.value.formProcess = false
+  }
 }
 </script>
 
 <template>
   <AppLayout>
     <template #content>
+      <v-alert
+      v-if="formAction.formSuccessMessage" 
+      :text="formAction.formSuccessMessage"
+      title="Success!"
+      type="success"
+      variant="tonal"
+      density="compact"
+      border="start"
+      closable
+      >
+      </v-alert>
+      <v-alert
+      v-if="formAction.formErrorMessage" 
+      :text="formAction.formErrorMessage"
+      title="Error!"
+      type="error"
+      variant="tonal"
+      density="compact"
+      border="start"
+      closable
+      >
+      </v-alert>
       <v-container
         class="d-flex align-center justify-center"
         style="min-height: 80vh"
@@ -119,7 +177,7 @@ function handleRegister() {
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
-                  :rules="[requiredValidator]"
+                  :rules="[requiredValidator, confirmedValidator]"
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
@@ -131,7 +189,7 @@ function handleRegister() {
                 ></v-checkbox>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="student">LOG IN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" block :disabled="formAction.formProcess" :loading="formActionProcess">Register</v-btn>
                 </div>
               </v-form>
               <div class="text-center mt-4">
