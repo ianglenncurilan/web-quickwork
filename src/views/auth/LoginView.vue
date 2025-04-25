@@ -132,7 +132,7 @@ function handleLogin() {
               <v-divider class="my-4"></v-divider>
               <h5 class="text-center">
                 Don't have an account?
-                <Router-link to="/register">Click Here to Register</Router-link>
+                <Router-link to="/register">Click to Register</Router-link>
               </h5>
             </v-col>
           </v-row>
