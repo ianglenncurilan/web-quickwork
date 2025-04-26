@@ -30,7 +30,7 @@ function loadJobsFromStorage() {
     jobs.value = [];
   }
 
-  
+
 }
 
 // Filtered jobs based on search
@@ -65,7 +65,7 @@ onMounted(() => {
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
               </button>
 
-             
+
 
               <!-- Navigation Menu -->
               <nav class="navigation-menu">

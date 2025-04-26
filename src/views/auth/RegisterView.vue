@@ -12,21 +12,28 @@ const formDataDefault = ref({
   lastname: '',
   email: '',
   password: '',
-  password_confirmation: ''
+  password_confirmation: '',
 })
 
 const formData = ref({
-  ...formDataDefault.value
+  ...formDataDefault.value,
 })
 
 const formAction = ref({
-  ...formActionDefault
+  ...formActionDefault,
 })
 
+const refVform = ref(null) // Define the form reference
 
 // Handle form submission
 const handleRegister = async () => {
-  if (!formData.value.firstname || !formData.value.lastname || !formData.value.email || !formData.value.password || !formData.value.password_confirmation) {
+  if (
+    !formData.value.firstname ||
+    !formData.value.lastname ||
+    !formData.value.email ||
+    !formData.value.password ||
+    !formData.value.password_confirmation
+  ) {
     alert('Please fill in all fields.')
     return
   }
@@ -37,7 +44,7 @@ const handleRegister = async () => {
   }
 
   formAction.value = {
-    ...formActionDefault
+    ...formActionDefault,
   }
   formAction.value.formProcess = true
 
@@ -48,9 +55,9 @@ const handleRegister = async () => {
       options: {
         data: {
           firstname: formData.value.firstname,
-          lastname: formData.value.lastname
-        }
-      }
+          lastname: formData.value.lastname,
+        },
+      },
     })
 
     if (error) {
@@ -61,6 +68,8 @@ const handleRegister = async () => {
       console.log(data)
       formAction.value.formSuccessMessage = 'Registration successful!'
       router.push('/student') // Navigate to the student page after successful registration
+      refVform.value?.reset() // Reset the form
+      Object.assign(formData.value, formDataDefault.value) // Reset formData to default values
     }
   } catch (err) {
     console.error('Unexpected error:', err)
@@ -74,35 +83,37 @@ const handleRegister = async () => {
 <template>
   <AppLayout>
     <template #content>
-      <v-alert
-      v-if="formAction.formSuccessMessage"
-      :text="formAction.formSuccessMessage"
-      title="Success!"
-      type="success"
-      variant="tonal"
-      density="compact"
-      border="start"
-      closable
-      >
-      </v-alert>
-      <v-alert
-      v-if="formAction.formErrorMessage"
-      :text="formAction.formErrorMessage"
-      title="Error!"
-      type="error"
-      variant="tonal"
-      density="compact"
-      border="start"
-      closable
-      >
-      </v-alert>
-      <v-container
-        class="d-flex align-center justify-center"
-        style="min-height: 80vh"
-      >
+      <v-row>
+        <v-col cols="10"></v-col>
+        <v-col cols="2">
+          <v-alert
+            v-if="formAction.formSuccessMessage"
+            :text="formAction.formSuccessMessage"
+            title="Success!"
+            type="success"
+            variant="tonal"
+            density="compact"
+            border="start"
+            closable
+          >
+          </v-alert>
+          <v-alert
+            v-if="formAction.formErrorMessage"
+            :text="formAction.formErrorMessage"
+            title="Error!"
+            type="error"
+            variant="tonal"
+            density="compact"
+            border="start"
+            closable
+          >
+          </v-alert
+        ></v-col>
+      </v-row>
+
+      <v-container class="d-flex align-center justify-center" style="min-height: 80vh">
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
-
             <!-- Left Section - Sign Up Prompt -->
             <v-col
               cols="12"
@@ -118,7 +129,10 @@ const handleRegister = async () => {
               />
 
               <h3 class="font-weight-bold text-center">Already Signed up?</h3>
-              <p class="text-center">Log in to your account so you can continue building and editing your onboarding flows.</p>
+              <p class="text-center">
+                Log in to your account so you can continue building and editing your onboarding
+                flows.
+              </p>
               <v-btn color="white" outlined class="mt-2" to="/">LOGIN</v-btn>
             </v-col>
 
@@ -126,9 +140,10 @@ const handleRegister = async () => {
             <v-col cols="12" md="7" class="pa-5">
               <div class="ribbon-container">
                 <h3 class="ribbon-text">Sign Up for an Account</h3>
-              </div><br>
+              </div>
+              <br />
 
-              <v-form fast-fail @submit.prevent="handleRegister">
+              <v-form ref="refVform" fast-fail @submit.prevent="handleRegister">
                 <v-row>
                   <v-col cols="12" md="6">
                     <v-text-field
@@ -175,7 +190,7 @@ const handleRegister = async () => {
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
-                  :rules="[requiredValidator, confirmedValidator]"
+                  :rules="[requiredValidator]"
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
@@ -187,7 +202,15 @@ const handleRegister = async () => {
                 ></v-checkbox>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" block :disabled="formAction.formProcess" :loading="formActionProcess">Register</v-btn>
+                  <v-btn
+                    class="mt-3 btn-fixed-width"
+                    color="#00412E"
+                    type="submit"
+                    block
+                    :disabled="formAction.formProcess"
+                    :loading="formActionProcess"
+                    >Register</v-btn
+                  >
                 </div>
               </v-form>
               <div class="text-center mt-4">
@@ -211,7 +234,7 @@ const handleRegister = async () => {
 }
 
 .new-here-section {
-  background-color: #328E6E;
+  background-color: #328e6e;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
@@ -240,7 +263,7 @@ const handleRegister = async () => {
 
 .new-here-section .v-btn:hover {
   background-color: white;
-  color: #00412E;
+  color: #00412e;
 }
 
 .ribbon-container {
@@ -248,7 +271,7 @@ const handleRegister = async () => {
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  background-color: #328E6E; /* Ribbon background color */
+  background-color: #328e6e; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
@@ -272,12 +295,12 @@ const handleRegister = async () => {
 .ribbon-container::before {
   left: 0;
   border-width: 10px 10px 0 0;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 
 .ribbon-container::after {
   right: 0;
   border-width: 10px 0 0 10px;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 </style>

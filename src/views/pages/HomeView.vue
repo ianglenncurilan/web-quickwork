@@ -36,12 +36,13 @@ function toggleTheme() {
           @click="toggleTheme"
         ></v-btn>
       </v-app-bar>
+      
 
       <!-- Main Content -->
       <v-container fluid>
         <v-container>
           <v-row align="center" justify="center" style="height: 100vh">
-            <!-- Left Text Section -->
+            <!-- Middle Text Section -->
             <v-col cols="12" md="6" class="text-center">
               <h1 class="display-2 font-weight-bold welcome-section">
                 Start Earning from Part-Time Jobs that Fit Your Skills & Time
@@ -116,6 +117,8 @@ function toggleTheme() {
         </v-container>
       </v-container>
 
+      <br /><br /><br /><br />
+
       <!-- Footer -->
       <v-footer border app>Quickwork 2025</v-footer>
     </v-app>
@@ -128,5 +131,16 @@ function toggleTheme() {
   font-weight: bold;
   color: #328e6e;
   margin-bottom: 1rem;
+}
+
+.v-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.v-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 </style>
