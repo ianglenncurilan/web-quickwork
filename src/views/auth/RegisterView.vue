@@ -23,8 +23,6 @@ const formAction = ref({
   ...formActionDefault
 })
 
-const isPasswordVisible = ref(false)
-const refVform = ref()
 
 // Handle form submission
 const handleRegister = async () => {
@@ -77,7 +75,7 @@ const handleRegister = async () => {
   <AppLayout>
     <template #content>
       <v-alert
-      v-if="formAction.formSuccessMessage" 
+      v-if="formAction.formSuccessMessage"
       :text="formAction.formSuccessMessage"
       title="Success!"
       type="success"
@@ -88,7 +86,7 @@ const handleRegister = async () => {
       >
       </v-alert>
       <v-alert
-      v-if="formAction.formErrorMessage" 
+      v-if="formAction.formErrorMessage"
       :text="formAction.formErrorMessage"
       title="Error!"
       type="error"

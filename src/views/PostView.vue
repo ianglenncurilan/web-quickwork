@@ -315,7 +315,7 @@ const filteredJobs = computed(() => {
                   class="d-flex"
                   @click="showJobDetails(job)"
                 >
-                <v-card class="pa-4 rounded-xl w-100 job-card-hover" elevation="3">
+                <v-card class="pa-5 rounded-xl w-100 zoom-hover" col="12" md="7" elevation="3">
                     <v-row no-gutters align="center">
                       <v-col cols="auto">
                         <v-img
@@ -347,8 +347,8 @@ const filteredJobs = computed(() => {
           </v-col>
 
           <!-- Right Column: Job Details -->
-          <v-col cols="3" class="sticky-card ">
-            <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="3">
+          <v-col cols="3" class="left-card">
+            <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
               <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
               <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
               <p class="text-body-2 mb-2 text-grey-darken-1">Job description: {{ selectedJob.description }}</p>
@@ -364,6 +364,17 @@ const filteredJobs = computed(() => {
 </template>
 
 <style scoped>
+
+.left-card {
+  transition: transform 0.3s ease;
+}
+
+.left-card:hover {
+  transform: scale(1.02);
+  z-index: 1;
+}
+
+
 .fill-screen {
   height: 100vh;
 
@@ -595,4 +606,12 @@ const filteredJobs = computed(() => {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
 }
 
+.zoom-hover {
+  transition: transform 0.3s ease;
+}
+
+.zoom-hover:hover {
+  transform: scale(1.02);
+  z-index: 1;
+}
 </style>
