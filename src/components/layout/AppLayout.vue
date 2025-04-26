@@ -17,7 +17,12 @@ function toggleTheme() {
         <template v-slot:image>
         </template>
 
-        <v-app-bar-title>Quickwork</v-app-bar-title>
+        <v-app-bar-title class="pt-3">
+         <img src="@/assets/qkwrk.png" alt="logo"
+         width="75px" height="75px">
+
+
+        </v-app-bar-title>
 
         <v-btn icon>
           <v-icon>mdi-heart</v-icon>

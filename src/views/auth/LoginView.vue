@@ -62,7 +62,7 @@ function handleLogin() {
               class="d-flex flex-column align-center justify-center new-here-section"
             >
               <img
-                src="@/assets/quickie.png"
+                src="@/assets/qkwrk.png"
                 alt="Quickie Logo"
                 class="logo"
                 width="200px"
@@ -86,7 +86,7 @@ function handleLogin() {
                   label="Email"
                   variant="outlined"
                   required
-                  :rules="[requiredValidator, emailValidator]"
+                  :rules="[emailValidator]"
                 ></v-text-field>
                 <v-text-field
                   v-model="formData.password"
