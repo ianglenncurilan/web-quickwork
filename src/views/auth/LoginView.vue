@@ -108,7 +108,7 @@ function handleLogin() {
 ></v-select>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post"
+                  <v-btn class="mt-3 btn-fixed-width" color="#328e6e" type="submit" to="/post"
                     >LOGIN</v-btn
                   >
                 </div>
@@ -172,7 +172,7 @@ function handleLogin() {
 
 .new-here-section .v-btn:hover {
   background-color: white;
-  color: #00412e;
+  color: #328e6e;
 }
 
 .ribbon-container {
