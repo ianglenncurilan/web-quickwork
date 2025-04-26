@@ -202,12 +202,6 @@ const filteredJobs = computed(() => {
                       <span v-if="!isSidebarCollapsed">Review</span>
                     </a>
                   </li>
-                  <li>
-                    <a href="/home">
-                      <i class="icon mdi mdi-briefcase-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Job Posted</span>
-                    </a>
-                  </li>
                   
                   <li>
                     <a href="/">
@@ -239,7 +233,7 @@ const filteredJobs = computed(() => {
             <!-- Job Form (Middle) -->
             <v-card
               v-if="isFormVisible"
-              class="pa-4 mb-6 rounded-xl custom-green-bg"
+              class="pa-4 mb-6 rounded-xl"
               elevation="1"
               flat
             >
@@ -304,9 +298,7 @@ const filteredJobs = computed(() => {
                 accept="image/*"
                 prepend-icon="mdi-camera"
               />
-            
-              
-              
+
 
               <v-btn
                 color="#328E6E"
@@ -329,7 +321,7 @@ const filteredJobs = computed(() => {
                   class="d-flex"
                   @click="showJobDetails(job)"
                 >
-                  <v-card class="pa-4 rounded-xl w-100" elevation="3">
+                <v-card class="pa-4 rounded-xl w-100 job-card-hover" elevation="3">
                     <v-row no-gutters align="center">
                       <v-col cols="auto">
                         <v-img
@@ -379,14 +371,20 @@ const filteredJobs = computed(() => {
 
 <style scoped>
 .fill-screen {
-  height: 150vh;
+  height: 100vh;
   
+}
+
+.scrollable-column {
+  max-height: 100vh;
+  overflow-y: auto;
+  padding-right: 12px;
 }
 
 .sticky-card {
   position: sticky;
   top: 0;
-  background-color: #E1EEBC; /* Replace with your desired color */
+  background-color: #F2E7C4; /* Replace with your desired color */
   padding: 10px; /* Optional: Add padding for better spacing */
   border-radius: 10px; /* Optional: Add rounded corners */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow effect */
@@ -419,7 +417,7 @@ const filteredJobs = computed(() => {
 }
 
 .custom-green-bg {
-  background-color: #E1EEBC; /* Replace with your desired color */
+  background-color: #F2E7C4; /* Replace with your desired color */
   border: 1px solid #F2E7C4; /* Optional: Add a border for better visibility */
   border-radius: 8px; /* Keep the rounded corners */
   padding: 16px; /* Adjust padding if needed */
@@ -427,7 +425,7 @@ const filteredJobs = computed(() => {
 
 .ribbon-container {
   position: relative;
-  background-color: #328E6E; /* Ribbon background color */
+  background-color: #00796b; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   text-align: center;
@@ -435,6 +433,28 @@ const filteredJobs = computed(() => {
   border-radius: 5px 5px 0 0; /* Rounded top corners */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
   margin-bottom: 1rem;
+}
+
+.ribbon-container::before,
+.ribbon-container::after {
+  content: '';
+  position: absolute;
+  top: 100%; /* Position below the ribbon */
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.ribbon-container::before {
+  left: 0;
+  border-width: 10px 10px 0 0;
+  border-color: #00796b transparent transparent transparent;
+}
+
+.ribbon-container::after {
+  right: 0;
+  border-width: 10px 0 0 10px;
+  border-color: #00796b transparent transparent transparent;
 }
 
 .ribbon-text {
@@ -445,7 +465,7 @@ const filteredJobs = computed(() => {
 /* Sidebar Styles */
 .sidebar {
   width: 350px;
-  background-color: #F2E7C4;
+  background-color: #E1EEBC;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -599,4 +619,15 @@ const filteredJobs = computed(() => {
 .search-button:active {
   transform: scale(0.95);
 }
+
+.job-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.job-card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
 </style>

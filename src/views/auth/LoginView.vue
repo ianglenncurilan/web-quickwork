@@ -1,8 +1,7 @@
-
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
-import { requiredValidator,  emailValidator, passwordValidator} from '@/utils/validators'
+import { requiredValidator, emailValidator, passwordValidator } from '@/utils/validators'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -13,33 +12,33 @@ const formDataDefault = ref({
   password: '',
 })
 
-const formData = ref({ 
-  ...formDataDefault.value
+const formData = ref({
+  ...formDataDefault.value,
 })
 
 const refVform = ref()
-
-
 
 // Define roles and selectedRole for the dropdown
 const roles = ref(['Student', 'Businessman'])
 const selectedRole = ref('')
 
+// Consolidated onFormSubmit function
 const onFormSubmit = () => {
-  refVform.value?.validate().then (({valid: isValid}) => {
-  if (isValid) {
-    handleLogin()
-  }else{
-    console.error('Form validation failed')
-  }
+  refVform.value?.validate().then(({ valid: isValid }) => {
+    if (isValid) {
+      handleLogin()
+    } else {
+      console.error('Form validation failed.')
+    }
+  }).catch((error) => {
+    console.error('Validation error:', error)
   })
-  }
-
+}
 
 // Handle form submission
 function handleLogin() {
   if (!selectedRole.value) {
-    alert('Please select a role before logging in.')
+    console.error('Please select a role before logging in.')
     return
   }
 
@@ -49,11 +48,10 @@ function handleLogin() {
   } else if (selectedRole.value === 'Businessman') {
     router.push('/post') // Navigate to PostView
   } else {
-    alert('Invalid role selected.')
+    console.error('Invalid role selected.')
   }
 }
 </script>
-
 
 <template>
   <AppLayout>
@@ -120,7 +118,9 @@ function handleLogin() {
                 </div>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post">LOGIN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit">
+                    LOGIN
+                  </v-btn>
                 </div>
                 <div class="text-center mt-2">
                   <Router-link to="/forgot-password" class="forgot-password-link">
@@ -137,7 +137,7 @@ function handleLogin() {
               <v-divider class="my-4"></v-divider>
               <h5 class="text-center">
                 Don't have an account?
-                <Router-link to="/register">Click to Register</Router-link>
+                <Router-link to="/register">Click Here to Register</Router-link>
               </h5>
             </v-col>
           </v-row>
@@ -153,7 +153,7 @@ function handleLogin() {
 }
 
 .new-here-section {
-  background-color: #328E6E;
+  background-color: #328e6e;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
@@ -190,7 +190,7 @@ function handleLogin() {
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  background-color: #328E6E; /* Ribbon background color */
+  background-color: #328e6e; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
@@ -214,13 +214,13 @@ function handleLogin() {
 .ribbon-container::before {
   left: 0;
   border-width: 10px 10px 0 0;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 
 .ribbon-container::after {
   right: 0;
   border-width: 10px 0 0 10px;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 
 .forgot-password-link {
@@ -270,7 +270,9 @@ function handleLogin() {
   appearance: none; /* Remove default dropdown arrow */
   outline: none;
   cursor: pointer;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 /* Dropdown Select Hover/Focus */

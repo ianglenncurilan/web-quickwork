@@ -14,7 +14,7 @@ const formDataDefault = ref({
   password_confirmation: ''
 })
 
-const formData = ref({ 
+const formData = ref({
   ...formDataDefault.value
 })
 
