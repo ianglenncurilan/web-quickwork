@@ -190,7 +190,7 @@ const filteredJobs = computed(() => {
                     </a>
                   </li>
                   <li>
-                    <a href="#" @click="openJobPostForm">
+                    <a href="#" @click="() => { isFormVisible = false }">
                       <i class="icon mdi mdi-briefcase-outline"></i>
                       <span v-if="!isSidebarCollapsed">Job Posted</span>
                     </a>
