@@ -62,7 +62,7 @@ function handleLogin() {
               class="d-flex flex-column align-center justify-center new-here-section"
             >
               <img
-                src="@/assets/quickie.png"
+                src="@/assets/qkwrk.png"
                 alt="Quickie Logo"
                 class="logo"
                 width="200px"
