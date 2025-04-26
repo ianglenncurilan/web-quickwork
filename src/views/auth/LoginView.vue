@@ -1,35 +1,50 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import { requiredValidator, emailValidator } from '@/utils/validators'
 import { ref } from 'vue'
+import { requiredValidator, emailValidator, passwordValidator } from '@/utils/validators'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const showPassword = ref(false)
 
-// Define formData object
-const formData = ref({
+const formDataDefault = ref({
   email: '',
   password: '',
 })
 
-// Define selectedRole for the dropdown
+const formData = ref({
+  ...formDataDefault.value,
+})
+
+const refVform = ref()
+
+const roles = ref(['Student', 'Businessman'])
 const selectedRole = ref('')
 
 // Handle form submission
+const onFormSubmit = () => {
+  refVform.value?.validate().then(({ valid: isValid }) => {
+    if (isValid) {
+      handleLogin()
+    } else {
+      console.error('Form validation failed.')
+    }
+  })
+}
+
 function handleLogin() {
-  if (!formData.value.email || !formData.value.password || !selectedRole.value) {
-    alert('Please fill in all fields and select a role.')
+  if (!selectedRole.value) {
+    console.error('Please select a role before logging in.')
     return
   }
 
   // Navigate to a specific route based on the selected role
   if (selectedRole.value === 'Student') {
-    router.push('/student')
+    router.push('/student') // Navigate to StudentView
   } else if (selectedRole.value === 'Businessman') {
-    router.push('/post')
+    router.push('/post') // Navigate to PostView
   } else {
-    alert('Invalid role selected.')
+    console.error('Invalid role selected.')
   }
 }
 </script>
@@ -65,13 +80,13 @@ function handleLogin() {
               </div>
               <br />
               <p class="text-center my-2">Log in to your account to continue</p>
-              <v-form fast-fail @submit.prevent="handleLogin">
+              <v-form ref="refVform" fast-fail @submit.prevent="onFormSubmit">
                 <v-text-field
                   v-model="formData.email"
                   label="Email"
                   variant="outlined"
                   required
-                  :rules="[v => !!v || 'Email is required']"
+                  :rules="[emailValidator]"
                 ></v-text-field>
                 <v-text-field
                   v-model="formData.password"
@@ -79,9 +94,9 @@ function handleLogin() {
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
+                  :rules="[requiredValidator, passwordValidator]"
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
-                  :rules="[v => !!v || 'Password is required']"
                 ></v-text-field>
 
                 <!-- Dropdown for selecting role -->
@@ -90,19 +105,22 @@ function handleLogin() {
                   <div class="custom-dropdown">
                     <select id="role-select" v-model="selectedRole" class="dropdown-select">
                       <option value="" disabled>Select Role</option>
-                      <option value="Student">Student</option>
-                      <option value="Businessman">Businessman</option>
+                      <option v-for="role in roles" :key="role" :value="role">
+                        {{ role }}
+                      </option>
                     </select>
                   </div>
                 </div>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#328E6E" type="submit" to="/post">LOGIN</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post"
+                    >LOGIN</v-btn
+                  >
                 </div>
                 <div class="text-center mt-2">
-                  <Router-link to="/forgot-password" class="forgot-password-link"
-                    >Forgot Password?</Router-link
-                  >
+                  <Router-link to="/forgot-password" class="forgot-password-link">
+                    Forgot Password?
+                  </Router-link>
                 </div>
               </v-form>
               <div class="text-center mt-4">
@@ -130,7 +148,7 @@ function handleLogin() {
 }
 
 .new-here-section {
-  background-color: #328E6E;
+  background-color: #328e6e;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
@@ -167,7 +185,7 @@ function handleLogin() {
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  background-color: #328E6E; /* Ribbon background color */
+  background-color: #328e6e; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
@@ -191,13 +209,13 @@ function handleLogin() {
 .ribbon-container::before {
   left: 0;
   border-width: 10px 10px 0 0;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 
 .ribbon-container::after {
   right: 0;
   border-width: 10px 0 0 10px;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 
 .forgot-password-link {
@@ -247,7 +265,9 @@ function handleLogin() {
   appearance: none; /* Remove default dropdown arrow */
   outline: none;
   cursor: pointer;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 /* Dropdown Select Hover/Focus */

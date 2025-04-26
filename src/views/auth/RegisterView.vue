@@ -1,16 +1,104 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
+import { requiredValidator, emailValidator, passwordValidator } from '@/utils/validators'
+import { useRouter } from 'vue-router'
+import { supabase, formActionDefault } from '@/utils/supabase.js'
 
-const showPassword = ref(false)
+const router = useRouter()
+
+const formDataDefault = ref({
+  firstname: '',
+  lastname: '',
+  email: '',
+  password: '',
+  password_confirmation: ''
+})
+
+const formData = ref({
+  ...formDataDefault.value
+})
+
+const formAction = ref({
+  ...formActionDefault
+})
+
+
+// Handle form submission
+const handleRegister = async () => {
+  if (!formData.value.firstname || !formData.value.lastname || !formData.value.email || !formData.value.password || !formData.value.password_confirmation) {
+    alert('Please fill in all fields.')
+    return
+  }
+
+  if (formData.value.password !== formData.value.password_confirmation) {
+    alert('Passwords do not match.')
+    return
+  }
+
+  formAction.value = {
+    ...formActionDefault
+  }
+  formAction.value.formProcess = true
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.value.email,
+      password: formData.value.password,
+      options: {
+        data: {
+          firstname: formData.value.firstname,
+          lastname: formData.value.lastname
+        }
+      }
+    })
+
+    if (error) {
+      console.error(error)
+      formAction.value.formErrorMessage = error.message
+      formAction.value.formStatus = error.status
+    } else if (data) {
+      console.log(data)
+      formAction.value.formSuccessMessage = 'Registration successful!'
+      router.push('/student') // Navigate to the student page after successful registration
+    }
+  } catch (err) {
+    console.error('Unexpected error:', err)
+    formAction.value.formErrorMessage = 'An unexpected error occurred.'
+  } finally {
+    formAction.value.formProcess = false
+  }
+}
 </script>
 
 <template>
   <AppLayout>
     <template #content>
+      <v-alert
+      v-if="formAction.formSuccessMessage"
+      :text="formAction.formSuccessMessage"
+      title="Success!"
+      type="success"
+      variant="tonal"
+      density="compact"
+      border="start"
+      closable
+      >
+      </v-alert>
+      <v-alert
+      v-if="formAction.formErrorMessage"
+      :text="formAction.formErrorMessage"
+      title="Error!"
+      type="error"
+      variant="tonal"
+      density="compact"
+      border="start"
+      closable
+      >
+      </v-alert>
       <v-container
         class="d-flex align-center justify-center"
-        style=" min-height: 80vh"
+        style="min-height: 80vh"
       >
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
@@ -21,7 +109,7 @@ const showPassword = ref(false)
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
             >
-            <img
+              <img
                 src="@/assets/quickie.png"
                 alt="Quickie Logo"
                 class="logo"
@@ -34,16 +122,18 @@ const showPassword = ref(false)
               <v-btn color="white" outlined class="mt-2" to="/">LOGIN</v-btn>
             </v-col>
 
-            <!-- Right Section - Login Form -->
+            <!-- Right Section - Register Form -->
             <v-col cols="12" md="7" class="pa-5">
               <div class="ribbon-container">
                 <h3 class="ribbon-text">Sign Up for an Account</h3>
               </div><br>
 
-              <v-form fast-fail @submit.prevent>
+              <v-form fast-fail @submit.prevent="handleRegister">
                 <v-row>
                   <v-col cols="12" md="6">
                     <v-text-field
+                      v-model="formData.firstname"
+                      :rules="[requiredValidator]"
                       label="First Name"
                       placeholder="Enter your first name"
                       variant="outlined"
@@ -52,6 +142,8 @@ const showPassword = ref(false)
                   </v-col>
                   <v-col cols="12" md="6">
                     <v-text-field
+                      v-model="formData.lastname"
+                      :rules="[requiredValidator]"
                       label="Last Name"
                       placeholder="Enter your last name"
                       variant="outlined"
@@ -59,21 +151,31 @@ const showPassword = ref(false)
                     ></v-text-field>
                   </v-col>
                 </v-row>
-                <v-text-field label="Email" variant="outlined" required></v-text-field>
+                <v-text-field
+                  v-model="formData.email"
+                  label="Email"
+                  variant="outlined"
+                  required
+                  :rules="[requiredValidator, emailValidator]"
+                ></v-text-field>
 
                 <v-text-field
+                  v-model="formData.password"
                   label="Password"
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
+                  :rules="[requiredValidator, passwordValidator]"
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
                 <v-text-field
+                  v-model="formData.password_confirmation"
                   label="Password Confirmation"
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
+                  :rules="[requiredValidator, confirmedValidator]"
                   append-inner-icon="mdi-eye"
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
@@ -85,9 +187,8 @@ const showPassword = ref(false)
                 ></v-checkbox>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#328E6E" type="submit" to="student">SIGN UP</v-btn>
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" block :disabled="formAction.formProcess" :loading="formActionProcess">Register</v-btn>
                 </div>
-
               </v-form>
               <div class="text-center mt-4">
                 <p class="my-4">Or</p>
@@ -96,7 +197,6 @@ const showPassword = ref(false)
                 <v-btn icon class="mx-2"><v-icon color="light-blue">mdi-twitter</v-icon></v-btn>
               </div>
               <v-divider class="my-4"></v-divider>
-
             </v-col>
           </v-row>
         </v-card>

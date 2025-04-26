@@ -65,12 +65,7 @@ onMounted(() => {
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
               </button>
 
-              <!-- Profile Section -->
-              <div class="profile-section" v-if="!isSidebarCollapsed">
-                <img src="@/assets/perdyboy.png" alt="Profile Picture" class="profile-picture" />
-                <h4 class="profile-name">Perd</h4>
-                <p class="profile-role">Student</p>
-              </div>
+             
 
               <!-- Navigation Menu -->
               <nav class="navigation-menu">
