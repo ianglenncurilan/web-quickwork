@@ -27,9 +27,7 @@ const isNotificationVisible = ref(false);
 
 // Notifications
 const notificationMessages = ref([
-  { id: 1, text: 'New applicant for your posted job!' },
-  { id: 2, text: 'Job #123 has been approved.' },
-  { id: 3, text: 'Reminder: Update your job listings.' },
+  
 ]);
 
 // Lifecycle Hook
@@ -218,21 +216,39 @@ function showJobDetails(job) {
             </div>
 
             <v-card v-if="isNotificationVisible" class="pa-4 mb-4 rounded-xl" elevation="2">
-  <div class="d-flex justify-space-between align-center mb-3">
-    <h4 class="mb-0">Notifications</h4>
+  <div class="d-flex justify-space-between align-center mb-4">
+    <div class="d-flex align-center">
+      <v-icon class="mr-2" color="primary">mdi-bell-outline</v-icon>
+      <h4 class="mb-0">Notifications</h4>
+    </div>
     <v-btn icon @click="isNotificationVisible = false">
       <v-icon>mdi-close</v-icon>
     </v-btn>
   </div>
-  <v-list dense>
+
+  <v-divider class="mb-4"></v-divider>
+
+  <v-list dense nav>
     <v-list-item
       v-for="message in notificationMessages"
       :key="message.id"
+      class="notification-item"
     >
-      <v-list-item-content>{{ message.text }}</v-list-item-content>
+      <v-list-item-avatar>
+        <v-icon color="deep-purple">mdi-bell-ring</v-icon>
+      </v-list-item-avatar>
+
+      <v-list-item-content>
+        <v-list-item-title class="font-weight-bold">
+          {{ message.text }}
+        </v-list-item-title>
+      </v-list-item-content>
     </v-list-item>
+
+    <v-divider v-if="notificationMessages.length" class="my-2" />
   </v-list>
 </v-card>
+
 
 
 
@@ -576,7 +592,7 @@ function showJobDetails(job) {
 }
 
 .search-button:hover {
-  background-color: #005a4c;
+  background-color: #0f1211;
   transform: scale(1.1);
 }
 
@@ -602,4 +618,13 @@ function showJobDetails(job) {
   transform: scale(1.02);
   z-index: 1;
 }
+.notification-item {
+  transition: background-color 0.2s ease;
+  border-radius: 10px;
+}
+
+.notification-item:hover {
+  background-color: #f0f0f0;
+}
+
 </style>
