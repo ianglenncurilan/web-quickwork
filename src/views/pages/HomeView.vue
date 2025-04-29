@@ -19,8 +19,9 @@ function toggleTheme() {
           <img src="@/assets/qkwrk.png" alt="logo" width="75px" height="75px" />
         </v-app-bar-title>
 
-        <v-btn class="text-white" to="/register"> Sign up </v-btn>
-        <v-btn class="text-white" to="/login"> Login </v-btn>
+        <v-btn class="text-white" to="/register"> Feature </v-btn>
+        <v-btn class="text-white" to="/login"> About </v-btn>
+        <v-btn class="text-white" to="/register"> FAQ </v-btn>
 
         <v-btn icon>
           <v-icon>mdi-heart</v-icon>
@@ -29,12 +30,6 @@ function toggleTheme() {
         <v-btn icon>
           <v-icon>mdi-dots-vertical</v-icon>
         </v-btn>
-
-        <v-btn
-          :prepend-icon="theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'"
-          slim
-          @click="toggleTheme"
-        ></v-btn>
       </v-app-bar>
       
 
@@ -42,17 +37,27 @@ function toggleTheme() {
       <v-container fluid>
         <v-container>
           <v-row align="center" justify="center" style="height: 100vh">
-            <!-- Middle Text Section -->
+            <!-- Left Image -->
+           <v-col cols="12" md="6" class="text-center">
+             <img src="@/assets/homepic2.jpg" alt="Intern Illustration" style="max-width: 100%; display: block; margin: 0 auto"/>
+            </v-col>
+            <!-- Right Text Section -->
             <v-col cols="12" md="6" class="text-center">
               <h1 class="display-2 font-weight-bold welcome-section">
                 Start Earning from Part-Time Jobs that Fit Your Skills & Time
               </h1>
               <br />
-              <p class="subtitle-1 mt-4 white--text">
+              <p class="subtitle-1 mt-2 white--text">
                 Quickwork connects you with flexible job opportunities that match your unique
                 abilities and availability. Whether you're a student, a freelancer, or just looking
                 for side income, our platform makes job hunting smart, fast, and personalized.
               </p>
+              <div class="d-flex justify-center mt-6" style="gap: 16px">
+          <!-- Sign up (filled circle) -->
+              <v-btn color="#328e6e" class="text-white" rounded style="height: 50px; width: 90px; min-width: 60px" to="/register"> Sign up </v-btn>
+          <!-- Login (outlined circle) -->
+              <v-btn variant="outlined" color="#328e6e" rounded style="height: 50px; width: 90px; min-width: 60px" to="/login"> Login </v-btn>
+            </div>
             </v-col>
           </v-row>
 
@@ -118,12 +123,10 @@ function toggleTheme() {
       </v-container>
 
       <br /><br /><br /><br />
-
-      <!-- Footer -->
-      <v-footer border app>Quickwork 2025</v-footer>
     </v-app>
   </v-responsive>
 </template>
+
 
 <style scoped>
 .welcome-section {
