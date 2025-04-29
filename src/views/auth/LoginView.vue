@@ -81,7 +81,7 @@ function handleLogin() {
 
   // Navigate to a specific route based on the selected role
   if (selectedRole.value === 'Student') {
-    router.push('/student') // Navigate to StudentView
+    router.replace('/student') // Navigate to StudentView
   } else if (selectedRole.value === 'Businessman') {
     router.replace('/post') // Navigate to PostView
   } else {
@@ -159,7 +159,7 @@ function handleLogin() {
                 </div>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post"
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit"
                     >LOGIN</v-btn
                   >
                 </div>
