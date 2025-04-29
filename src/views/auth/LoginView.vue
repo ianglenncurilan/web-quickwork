@@ -1,11 +1,20 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
+import { supabase } from '@/utils/supabase'
+import AlertNotification from '@/components/layout/commons/AlertNotification.vue'
 import { ref } from 'vue'
 import { requiredValidator, emailValidator, passwordValidator } from '@/utils/validators'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const showPassword = ref(false)
+
+const formActionDefault = {
+  formProcess: false,
+  formErrorMessage: '',
+  formSuccessMessage: '',
+  formStatus: null,
+}
 
 const formDataDefault = ref({
   email: '',
@@ -16,16 +25,48 @@ const formData = ref({
   ...formDataDefault.value,
 })
 
+const formAction = ref({
+  ...formActionDefault,
+})
+
 const refVform = ref()
 
 const roles = ref(['Student', 'Businessman'])
 const selectedRole = ref('')
 
-// Handle form submission
+const onSubmit = async () => {
+  formAction.value = {
+    ...formActionDefault,
+  }
+  formAction.value.formProcess = true
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: formData.value.email,
+      password: formData.value.password,
+    })
+
+    if (error) {
+      console.error(error)
+      formAction.value.formErrorMessage = error.message
+      formAction.value.formStatus = error.status
+    } else if (data) {
+      console.log(data)
+      formAction.value.formSuccessMessage = 'Logged in successfully!'
+      handleLogin() // Navigate based on the selected role
+    }
+  } catch (err) {
+    console.error('Unexpected error:', err)
+    formAction.value.formErrorMessage = 'An unexpected error occurred.'
+  } finally {
+    formAction.value.formProcess = false
+  }
+}
+
 const onFormSubmit = () => {
   refVform.value?.validate().then(({ valid: isValid }) => {
     if (isValid) {
-      handleLogin()
+      onSubmit() // Call the login submission function
     } else {
       console.error('Form validation failed.')
     }
@@ -42,7 +83,7 @@ function handleLogin() {
   if (selectedRole.value === 'Student') {
     router.push('/student') // Navigate to StudentView
   } else if (selectedRole.value === 'Businessman') {
-    router.push('/post') // Navigate to PostView
+    router.replace('/post') // Navigate to PostView
   } else {
     console.error('Invalid role selected.')
   }
@@ -80,7 +121,12 @@ function handleLogin() {
               </div>
               <br />
               <p class="text-center my-2">Log in to your account to continue</p>
-              <v-form ref="refVform" fast-fail @submit.prevent="onFormSubmit">
+              <AlertNotification
+                :formSuccessMessage="formAction.formSuccessMessage"
+                :formErrorMessage="formAction.formErrorMessage"
+              ></AlertNotification>
+
+              <v-form class="mt-5" ref="refVform" fast-fail @submit.prevent="onFormSubmit">
                 <v-text-field
                   v-model="formData.email"
                   label="Email"

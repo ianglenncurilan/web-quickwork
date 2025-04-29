@@ -2,13 +2,10 @@
 import { ref } from 'vue'
 
 const theme = ref('light')
-function scrollToSection(id) {
-  const el = document.getElementById(id)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
-  }
-}
 
+function toggleTheme() {
+  theme.value = theme.value === 'light' ? 'dark' : 'light'
+}
 </script>
 
 <template>
@@ -34,7 +31,7 @@ function scrollToSection(id) {
           <v-icon>mdi-dots-vertical</v-icon>
         </v-btn>
       </v-app-bar>
-      
+
 
       <!-- Main Content -->
       <v-container fluid>
