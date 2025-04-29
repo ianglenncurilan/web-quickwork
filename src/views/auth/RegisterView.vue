@@ -2,6 +2,7 @@
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
 import { requiredValidator, emailValidator, passwordValidator } from '@/utils/validators'
+import AlertNotification from '@/components/layout/commons/AlertNotification.vue'
 import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase.js'
 
@@ -126,29 +127,11 @@ const handleRegister = async () => {
               </div>
               <br />
               <v-col>
-                <v-alert
-                  v-if="formAction.formSuccessMessage"
-                  :text="formAction.formSuccessMessage"
-                  title="Success!"
-                  type="success"
-                  variant="tonal"
-                  density="compact"
-                  border="start"
-                  closable
-                >
-                </v-alert>
-                <v-alert
-                  v-if="formAction.formErrorMessage"
-                  :text="formAction.formErrorMessage"
-                  title="Error!"
-                  type="error"
-                  variant="tonal"
-                  density="compact"
-                  border="start"
-                  closable
-                >
-                </v-alert
-              ></v-col>
+                <AlertNotification
+                :formSuccessMessage="formAction.formSuccessMessage"
+                :formErrorMessage="formAction.formErrorMessage"
+              ></AlertNotification>
+              </v-col>
               <v-form ref="refVform" fast-fail @submit.prevent="handleRegister">
                 <v-row>
                   <v-col cols="12" md="6" class="mb-1">

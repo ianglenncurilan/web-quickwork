@@ -4,6 +4,7 @@ import LoginView from '@/views/auth/LoginView.vue';
 import RegisterView from '@/views/auth/RegisterView.vue';
 import PostView from '@/views/PostView.vue';
 import StudentView from '@/views/StudentView.vue';
+import AlertNotification from '@/components/layout/commons/AlertNotification.vue';
 
 
 const routes = [
@@ -31,6 +32,11 @@ const routes = [
     path: '/student',
     name: 'student',
     component: StudentView,
+  },
+  {
+    path: '/alert',
+    name: 'alert',
+    component: AlertNotification,
   },
 ];
 

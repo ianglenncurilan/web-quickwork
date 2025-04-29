@@ -250,6 +250,7 @@ const filteredJobs = computed(() => {
               </div>
             </div>
 
+
             <!-- Job Form (Middle) -->
             <v-card v-if="isFormVisible" class="pa-4 mb-6 rounded-xl" elevation="1" flat>
               <div class="ribbon-container">
@@ -369,7 +370,7 @@ const filteredJobs = computed(() => {
           </v-col>
 
           <!-- Right Column: Job Details -->
-          <v-col cols="3" class="left-card">
+          <v-col cols="3" class="">
             <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
               <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
               <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
