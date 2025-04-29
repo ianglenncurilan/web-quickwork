@@ -204,12 +204,6 @@ const handleRegister = async () => {
                   @click:append-inner="togglePasswordVisibility('passwordConfirmation')"
                 ></v-text-field>
 
-                <v-checkbox
-                  label="I Accept Terms & Conditions"
-                  required
-                  class="terms-checkbox"
-                ></v-checkbox>
-
                 <div class="d-flex justify-center">
                   <v-btn
                     class="mt-3 btn-fixed-width"
@@ -222,12 +216,7 @@ const handleRegister = async () => {
                   >
                 </div>
               </v-form>
-              <div class="text-center mt-4">
-                <p class="my-4">Or</p>
-                <v-btn icon class="mx-2"><v-icon color="red">mdi-google</v-icon></v-btn>
-                <v-btn icon class="mx-2"><v-icon color="blue">mdi-facebook</v-icon></v-btn>
-                <v-btn icon class="mx-2"><v-icon color="light-blue">mdi-twitter</v-icon></v-btn>
-              </div>
+
               <v-divider class="my-4"></v-divider>
             </v-col>
           </v-row>
