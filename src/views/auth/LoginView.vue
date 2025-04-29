@@ -82,7 +82,6 @@ function handleLogin() {
               <p class="text-center my-2">Log in to your account to continue</p>
               <v-form ref="refVform" fast-fail @submit.prevent="onFormSubmit">
                 <v-text-field
-                  class="my-2"
                   v-model="formData.email"
                   label="Email"
                   variant="outlined"

@@ -77,8 +77,8 @@ const handleRegister = async () => {
     } else if (data) {
       console.log(data)
       formAction.value.formSuccessMessage = 'Registration successful!'
-      router.push('/login') // Redirect to the login page after successful registration
-      refVform.value?.reset() // Reset the form
+      router.replace('/login') // Redirect to the login page after successful registration
+
       Object.assign(formData.value, formDataDefault.value) // Reset formData to default values
     }
   } catch (err) {
@@ -97,33 +97,8 @@ const handleRegister = async () => {
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
             <!-- Left Section - Sign Up Prompt -->
-            <v-row>
-              <v-col cols="2">
-                <v-alert
-                  v-if="formAction.formSuccessMessage"
-                  :text="formAction.formSuccessMessage"
-                  title="Success!"
-                  type="success"
-                  variant="tonal"
-                  density="compact"
-                  border="start"
-                  closable
-                >
-                </v-alert>
-                <v-alert
-                  v-if="formAction.formErrorMessage"
-                  :text="formAction.formErrorMessage"
-                  title="Error!"
-                  type="error"
-                  variant="tonal"
-                  density="compact"
-                  border="start"
-                  closable
-                >
-                </v-alert
-              ></v-col>
-            </v-row>
             <v-col
+
               cols="12"
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
@@ -150,7 +125,30 @@ const handleRegister = async () => {
                 <h3 class="ribbon-text">Sign Up for an Account</h3>
               </div>
               <br />
-
+              <v-col>
+                <v-alert
+                  v-if="formAction.formSuccessMessage"
+                  :text="formAction.formSuccessMessage"
+                  title="Success!"
+                  type="success"
+                  variant="tonal"
+                  density="compact"
+                  border="start"
+                  closable
+                >
+                </v-alert>
+                <v-alert
+                  v-if="formAction.formErrorMessage"
+                  :text="formAction.formErrorMessage"
+                  title="Error!"
+                  type="error"
+                  variant="tonal"
+                  density="compact"
+                  border="start"
+                  closable
+                >
+                </v-alert
+              ></v-col>
               <v-form ref="refVform" fast-fail @submit.prevent="handleRegister">
                 <v-row>
                   <v-col cols="12" md="6" class="mb-1">
