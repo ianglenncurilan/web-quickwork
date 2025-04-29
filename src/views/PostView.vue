@@ -1,11 +1,12 @@
 <script setup>
+import { ref, onMounted, watch } from 'vue';
 import AppLayout from '@/components/layout/AppLayout.vue';
-import { ref, onMounted, watch, computed } from 'vue';
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings';
 
-// Form state
+// States
+const jobs = ref([]);
 const jobForm = ref({
   title: '',
   company: '',
@@ -15,61 +16,61 @@ const jobForm = ref({
   rate: '',
   link: '',
 });
-
-// Job list
-const jobs = ref([]);
-
-// Edit mode
 const isEditing = ref(false);
 const editingJobId = ref(null);
-const isFormVisible = ref(false); // Track form visibility
+const isFormVisible = ref(false);
 const selectedJob = ref(null);
 const searchQuery = ref('');
-
-// Sidebar collapse state
+const showPostedJobsOnly = ref(false);
 const isSidebarCollapsed = ref(false);
+const isNotificationVisible = ref(false);
 
-// Function to toggle sidebar collapse
-function toggleSidebar() {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value;
-}
+// Notifications
+const notificationMessages = ref([
+  { id: 1, text: 'New applicant for your posted job!' },
+  { id: 2, text: 'Job #123 has been approved.' },
+  { id: 3, text: 'Reminder: Update your job listings.' },
+]);
 
-// Function to open the job post form
-function openJobPostForm() {
-  isFormVisible.value = true; // Show the job form
-}
-
-// Function to close the job post form
-function closeJobPostForm() {
-  isFormVisible.value = false; // Hide the job form
-}
-
-// Load jobs from localStorage
-function loadJobsFromStorage() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const parsed = stored ? JSON.parse(stored) : [];
-    jobs.value = Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('Failed to load jobs from localStorage:', err);
-    jobs.value = [];
-  }
-}
-
+// Lifecycle Hook
 onMounted(() => {
   loadJobsFromStorage();
 });
 
-// Watch jobs and update localStorage
-watch(
-  jobs,
-  (newVal) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-  },
-  { deep: true },
-);
+// Watchers
+watch(jobs, (newVal) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
+}, { deep: true });
 
-// Upload image
+// =============================
+// Sidebar
+// =============================
+function toggleSidebar() {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value;
+}
+
+// =============================
+// Notifications
+// =============================
+function toggleNotification() {
+  isNotificationVisible.value = !isNotificationVisible.value;
+  isFormVisible.value = false;
+  selectedJob.value = null;
+}
+
+// =============================
+// Job Form
+// =============================
+function openJobPostForm() {
+  isNotificationVisible.value = false;
+  selectedJob.value = null;
+  isFormVisible.value = true;
+}
+
+function closeJobPostForm() {
+  isFormVisible.value = false;
+}
+
 function handleImageUpload(event) {
   const file = event.target?.files?.[0] || event;
   if (file) {
@@ -81,42 +82,31 @@ function handleImageUpload(event) {
   }
 }
 
-// Post or update job
 function postJob() {
-  // Validate form fields
-  if (
-    !jobForm.value.title.trim() ||
-    !jobForm.value.description.trim() ||
-    !jobForm.value.type.trim() ||
-    !jobForm.value.rate.trim() ||
-    !jobForm.value.link.trim() ||
-    !jobForm.value.imageUrl
-  ) {
+  const form = jobForm.value;
+  if (!form.title.trim() || !form.description.trim() || !form.type.trim() ||
+      !form.rate.trim() || !form.link.trim() || !form.imageUrl) {
     alert('Please complete all fields.');
     return;
   }
 
   if (isEditing.value && editingJobId.value !== null) {
-    // Update existing job
-    const index = jobs.value.findIndex((job) => job.id === editingJobId.value);
+    const index = jobs.value.findIndex(job => job.id === editingJobId.value);
     if (index !== -1) {
-      jobs.value[index] = {
-        ...jobs.value[index],
-        ...jobForm.value,
-      };
+      jobs.value[index] = { ...jobs.value[index], ...form };
     }
     isEditing.value = false;
     editingJobId.value = null;
   } else {
-    // Add new job
-    const newJob = {
-      id: Date.now(),
-      ...jobForm.value,
-    };
+    const newJob = { id: Date.now(), ...form };
     jobs.value.unshift(newJob);
   }
 
-  // Reset form
+  resetForm();
+  closeJobPostForm();
+}
+
+function resetForm() {
   jobForm.value = {
     title: '',
     company: '',
@@ -126,18 +116,27 @@ function postJob() {
     rate: '',
     link: '',
   };
-
-  closeJobPostForm();
 }
 
-// Delete job
-function deleteJob(id) {
-  if (confirm('Are you sure you want to delete this job?')) {
-    jobs.value = jobs.value.filter((job) => job.id !== id);
+// =============================
+// Job Management
+// =============================
+function loadJobsFromStorage() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    jobs.value = stored ? JSON.parse(stored) : [];
+  } catch (err) {
+    console.error('Failed to load jobs:', err);
+    jobs.value = [];
   }
 }
 
-// Edit job
+function deleteJob(id) {
+  if (confirm('Are you sure you want to delete this job?')) {
+    jobs.value = jobs.value.filter(job => job.id !== id);
+  }
+}
+
 function editJob(job) {
   jobForm.value = { ...job };
   editingJobId.value = job.id;
@@ -145,21 +144,11 @@ function editJob(job) {
   isFormVisible.value = true;
 }
 
-// Show job details
 function showJobDetails(job) {
   selectedJob.value = job;
 }
-
-// Filtered jobs based on search
-const filteredJobs = computed(() => {
-  const searchText = searchQuery.value.toLowerCase();
-  return jobs.value.filter((job) =>
-    [job.title, job.company, job.description].some((field) =>
-      field.toLowerCase().includes(searchText),
-    ),
-  );
-});
 </script>
+
 
 <template>
   <AppLayout>
@@ -177,12 +166,11 @@ const filteredJobs = computed(() => {
               <!-- Navigation Menu -->
               <nav class="navigation-menu">
                 <ul>
-                  <li>
-                    <a href="#" @click="openJobPostForm">
-                      <i class="icon mdi mdi-bell-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Notification</span>
-                    </a>
-                  </li>
+                  <li><a href="#" @click.prevent="toggleNotification">
+  <i class="icon mdi mdi-bell-outline"></i>
+  <span v-if="!isSidebarCollapsed">Notification</span>
+</a></li>
+
                   <li>
                     <a href="#" @click="openJobPostForm">
                       <i class="icon mdi mdi-plus-circle-outline"></i>
@@ -228,6 +216,43 @@ const filteredJobs = computed(() => {
                 </button>
               </div>
             </div>
+
+            <v-card v-if="isNotificationVisible" class="pa-4 mb-4 rounded-xl" elevation="2">
+  <div class="d-flex justify-space-between align-center mb-4">
+    <div class="d-flex align-center">
+      <v-icon class="mr-2" color="primary">mdi-bell-outline</v-icon>
+      <h4 class="mb-0">Notifications</h4>
+    </div>
+    <v-btn icon @click="isNotificationVisible = false">
+      <v-icon>mdi-close</v-icon>
+    </v-btn>
+  </div>
+
+  <v-divider class="mb-4"></v-divider>
+
+  <v-list dense nav>
+    <v-list-item
+      v-for="message in notificationMessages"
+      :key="message.id"
+      class="notification-item"
+    >
+      <v-list-item-avatar>
+        <v-icon color="deep-purple">mdi-bell-ring</v-icon>
+      </v-list-item-avatar>
+
+      <v-list-item-content>
+        <v-list-item-title class="font-weight-bold">
+          {{ message.text }}
+        </v-list-item-title>
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-divider v-if="notificationMessages.length" class="my-2" />
+  </v-list>
+</v-card>
+
+
+
 
             <!-- Job Form (Middle) -->
             <v-card
@@ -463,7 +488,7 @@ const filteredJobs = computed(() => {
 
 .toggle-btn {
   position: absolute;
-  top: 350px;
+  top: 330px;
   right: 10px; /* Adjusted to keep the button fully inside the sidebar */
   background-color: #00796b;
   color: white;
@@ -482,31 +507,6 @@ const filteredJobs = computed(() => {
 .toggle-btn:hover {
   transform: scale(1.1);
 }
-
-.profile-section {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.profile-picture {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-}
-
-.profile-name {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-}
-
-.profile-role {
-  font-size: 14px;
-  color: #757575;
-  margin: 0;
-}
-
 .navigation-menu ul {
   list-style: none;
   padding: 0;
@@ -530,7 +530,7 @@ const filteredJobs = computed(() => {
 }
 
 .navigation-menu a:hover {
-  background-color: #00796b;
+  background-color: #fff;
 }
 
 .icon {
@@ -620,4 +620,13 @@ const filteredJobs = computed(() => {
   transform: scale(1.02);
   z-index: 1;
 }
+.notification-item {
+  transition: background-color 0.2s ease;
+  border-radius: 10px;
+}
+
+.notification-item:hover {
+  background-color: #f0f0f0;
+}
+
 </style>
