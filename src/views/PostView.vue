@@ -169,6 +169,19 @@ const filteredJobs = computed(() => {
           <!-- Left Column: Navigation -->
           <v-col cols="3" class="left-column my-5">
             <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
+              <div class="profile-section">
+                <v-avatar :size="isSidebarCollapsed ? 50 : 80" class="mb-2">
+                  <v-img src="/images/profile.jpg" alt="Profile Picture" />
+                </v-avatar>
+
+               <!-- Hide name and role when collapsed -->
+                <transition name="fade">
+                   <div v-if="!isSidebarCollapsed">
+                      <p class="profile-name">Jasmin</p>
+                      <p class="profile-role">Business Owner</p>
+                   </div>
+                 </transition>
+             </div>
               <!-- Arrow Button -->
               <button class="toggle-btn" @click="toggleSidebar">
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
@@ -370,6 +383,19 @@ const filteredJobs = computed(() => {
 </template>
 
 <style scoped>
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .v-avatar {
+  width: 50px;
+  height: 50px;
+  transition: all 0.3s ease;
+}
 
 .left-card {
   transition: transform 0.3s ease;
