@@ -50,7 +50,7 @@ function scrollToSection(id) {
                 Start Earning from Part-Time Jobs that Fit Your Skills & Time
               </h1>
               <br />
-              <p class="subtitle-1 mt-2 white--text">
+              <p class="subtitle-1 white--text">
                 Quickwork connects you with flexible job opportunities that match your unique
                 abilities and availability. Whether you're a student, a freelancer, or just looking
                 for side income, our platform makes job hunting smart, fast, and personalized.
@@ -65,13 +65,60 @@ function scrollToSection(id) {
           </v-row>
 
           <!-- Feature Section -->
-          <v-row class="text-center mt-16" justify="center" id="feature">
+          <v-row class="text-center mt-16" justify="center">
             <v-col cols="12">
-              <h2 class="white--text mb-4 my-5">Why Choose QuickWork?</h2>
+              <h2 class="white--text mb-4 my-5" id="feature">Features</h2>
               <p class="subtitle-1 white--text mb-10 my-5">
-                We simplify the job search with intelligent tools designed to help you land the
-                right opportunities quickly and efficiently.
+                Discover powerful tools that help students find flexible, skill-matching jobs faster and easier.
               </p>
+            </v-col>
+
+            <!-- Card 1 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+                <v-icon size="40" color="white">mdi-magnify</v-icon>
+                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
+                <p class="white--text">
+                  Find the perfect workflow templates with our AI-powered search engine that
+                  understands your specific needs.
+                </p>
+              </v-card>
+            </v-col>
+
+            <!-- Card 1 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+                <v-icon size="40" color="white">mdi-magnify</v-icon>
+                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
+                <p class="white--text">
+                  Find the perfect workflow templates with our AI-powered search engine that
+                  understands your specific needs.
+                </p>
+              </v-card>
+            </v-col>
+
+            <!-- Card 1 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+                <v-icon size="40" color="white">mdi-magnify</v-icon>
+                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
+                <p class="white--text">
+                  Find the perfect workflow templates with our AI-powered search engine that
+                  understands your specific needs.
+                </p>
+              </v-card>
             </v-col>
 
             <!-- Card 1 -->
