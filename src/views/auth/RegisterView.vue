@@ -121,7 +121,7 @@ const handleRegister = async () => {
 
               <h3 class="font-weight-bold text-center">Already Signed up?</h3>
               <p class="text-center">Log in to your account so you can continue building and editing your onboarding flows.</p>
-              <v-btn color="white" outlined class="mt-2" to="/">LOGIN</v-btn>
+              <v-btn color="white" outlined class="mt-2" to="/login">LOGIN</v-btn>
             </v-col>
 
             <!-- Right Section - Register Form -->

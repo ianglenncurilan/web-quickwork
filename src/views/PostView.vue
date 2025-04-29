@@ -1,12 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
 import AppLayout from '@/components/layout/AppLayout.vue';
+import { ref, onMounted, watch, computed } from 'vue';
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings';
 
-// States
-const jobs = ref([]);
+// Form state
 const jobForm = ref({
   title: '',
   company: '',
@@ -16,59 +15,61 @@ const jobForm = ref({
   rate: '',
   link: '',
 });
+
+// Job list
+const jobs = ref([]);
+
+// Edit mode
 const isEditing = ref(false);
 const editingJobId = ref(null);
-const isFormVisible = ref(false);
+const isFormVisible = ref(false); // Track form visibility
 const selectedJob = ref(null);
 const searchQuery = ref('');
-const showPostedJobsOnly = ref(false);
+
+// Sidebar collapse state
 const isSidebarCollapsed = ref(false);
-const isNotificationVisible = ref(false);
 
-// Notifications
-const notificationMessages = ref([
-  
-]);
-
-// Lifecycle Hook
-onMounted(() => {
-  loadJobsFromStorage();
-});
-
-// Watchers
-watch(jobs, (newVal) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-}, { deep: true });
-
-// =============================
-// Sidebar
-// =============================
+// Function to toggle sidebar collapse
 function toggleSidebar() {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
 }
 
-// =============================
-// Notifications
-// =============================
-function toggleNotification() {
-  isNotificationVisible.value = !isNotificationVisible.value;
-  isFormVisible.value = false;
-  selectedJob.value = null;
-}
-
-// =============================
-// Job Form
-// =============================
+// Function to open the job post form
 function openJobPostForm() {
-  isNotificationVisible.value = false;
-  selectedJob.value = null;
-  isFormVisible.value = true;
+  isFormVisible.value = true; // Show the job form
 }
 
+// Function to close the job post form
 function closeJobPostForm() {
-  isFormVisible.value = false;
+  isFormVisible.value = false; // Hide the job form
 }
 
+// Load jobs from localStorage
+function loadJobsFromStorage() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const parsed = stored ? JSON.parse(stored) : [];
+    jobs.value = Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error('Failed to load jobs from localStorage:', err);
+    jobs.value = [];
+  }
+}
+
+onMounted(() => {
+  loadJobsFromStorage();
+});
+
+// Watch jobs and update localStorage
+watch(
+  jobs,
+  (newVal) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
+  },
+  { deep: true },
+);
+
+// Upload image
 function handleImageUpload(event) {
   const file = event.target?.files?.[0] || event;
   if (file) {
@@ -80,31 +81,42 @@ function handleImageUpload(event) {
   }
 }
 
+// Post or update job
 function postJob() {
-  const form = jobForm.value;
-  if (!form.title.trim() || !form.description.trim() || !form.type.trim() ||
-      !form.rate.trim() || !form.link.trim() || !form.imageUrl) {
+  // Validate form fields
+  if (
+    !jobForm.value.title.trim() ||
+    !jobForm.value.description.trim() ||
+    !jobForm.value.type.trim() ||
+    !jobForm.value.rate.trim() ||
+    !jobForm.value.link.trim() ||
+    !jobForm.value.imageUrl
+  ) {
     alert('Please complete all fields.');
     return;
   }
 
   if (isEditing.value && editingJobId.value !== null) {
-    const index = jobs.value.findIndex(job => job.id === editingJobId.value);
+    // Update existing job
+    const index = jobs.value.findIndex((job) => job.id === editingJobId.value);
     if (index !== -1) {
-      jobs.value[index] = { ...jobs.value[index], ...form };
+      jobs.value[index] = {
+        ...jobs.value[index],
+        ...jobForm.value,
+      };
     }
     isEditing.value = false;
     editingJobId.value = null;
   } else {
-    const newJob = { id: Date.now(), ...form };
+    // Add new job
+    const newJob = {
+      id: Date.now(),
+      ...jobForm.value,
+    };
     jobs.value.unshift(newJob);
   }
 
-  resetForm();
-  closeJobPostForm();
-}
-
-function resetForm() {
+  // Reset form
   jobForm.value = {
     title: '',
     company: '',
@@ -114,27 +126,18 @@ function resetForm() {
     rate: '',
     link: '',
   };
+
+  closeJobPostForm();
 }
 
-// =============================
-// Job Management
-// =============================
-function loadJobsFromStorage() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    jobs.value = stored ? JSON.parse(stored) : [];
-  } catch (err) {
-    console.error('Failed to load jobs:', err);
-    jobs.value = [];
-  }
-}
-
+// Delete job
 function deleteJob(id) {
   if (confirm('Are you sure you want to delete this job?')) {
-    jobs.value = jobs.value.filter(job => job.id !== id);
+    jobs.value = jobs.value.filter((job) => job.id !== id);
   }
 }
 
+// Edit job
 function editJob(job) {
   jobForm.value = { ...job };
   editingJobId.value = job.id;
@@ -142,11 +145,21 @@ function editJob(job) {
   isFormVisible.value = true;
 }
 
+// Show job details
 function showJobDetails(job) {
   selectedJob.value = job;
 }
-</script>
 
+// Filtered jobs based on search
+const filteredJobs = computed(() => {
+  const searchText = searchQuery.value.toLowerCase();
+  return jobs.value.filter((job) =>
+    [job.title, job.company, job.description].some((field) =>
+      field.toLowerCase().includes(searchText),
+    ),
+  );
+});
+</script>
 
 <template>
   <AppLayout>
@@ -164,11 +177,12 @@ function showJobDetails(job) {
               <!-- Navigation Menu -->
               <nav class="navigation-menu">
                 <ul>
-                  <li><a href="#" @click.prevent="toggleNotification">
-  <i class="icon mdi mdi-bell-outline"></i>
-  <span v-if="!isSidebarCollapsed">Notification</span>
-</a></li>
-
+                  <li>
+                    <a href="#" @click="openJobPostForm">
+                      <i class="icon mdi mdi-bell-outline"></i>
+                      <span v-if="!isSidebarCollapsed">Notification</span>
+                    </a>
+                  </li>
                   <li>
                     <a href="#" @click="openJobPostForm">
                       <i class="icon mdi mdi-plus-circle-outline"></i>
@@ -214,43 +228,6 @@ function showJobDetails(job) {
                 </button>
               </div>
             </div>
-
-            <v-card v-if="isNotificationVisible" class="pa-4 mb-4 rounded-xl" elevation="2">
-  <div class="d-flex justify-space-between align-center mb-4">
-    <div class="d-flex align-center">
-      <v-icon class="mr-2" color="primary">mdi-bell-outline</v-icon>
-      <h4 class="mb-0">Notifications</h4>
-    </div>
-    <v-btn icon @click="isNotificationVisible = false">
-      <v-icon>mdi-close</v-icon>
-    </v-btn>
-  </div>
-
-  <v-divider class="mb-4"></v-divider>
-
-  <v-list dense nav>
-    <v-list-item
-      v-for="message in notificationMessages"
-      :key="message.id"
-      class="notification-item"
-    >
-      <v-list-item-avatar>
-        <v-icon color="deep-purple">mdi-bell-ring</v-icon>
-      </v-list-item-avatar>
-
-      <v-list-item-content>
-        <v-list-item-title class="font-weight-bold">
-          {{ message.text }}
-        </v-list-item-title>
-      </v-list-item-content>
-    </v-list-item>
-
-    <v-divider v-if="notificationMessages.length" class="my-2" />
-  </v-list>
-</v-card>
-
-
-
 
             <!-- Job Form (Middle) -->
             <v-card
@@ -486,7 +463,7 @@ function showJobDetails(job) {
 
 .toggle-btn {
   position: absolute;
-  top: 330px;
+  top: 350px;
   right: 10px; /* Adjusted to keep the button fully inside the sidebar */
   background-color: #00796b;
   color: white;
@@ -505,6 +482,31 @@ function showJobDetails(job) {
 .toggle-btn:hover {
   transform: scale(1.1);
 }
+
+.profile-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.profile-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.profile-role {
+  font-size: 14px;
+  color: #757575;
+  margin: 0;
+}
+
 .navigation-menu ul {
   list-style: none;
   padding: 0;
@@ -528,7 +530,7 @@ function showJobDetails(job) {
 }
 
 .navigation-menu a:hover {
-  background-color: #fff;
+  background-color: #00796b;
 }
 
 .icon {
@@ -592,7 +594,7 @@ function showJobDetails(job) {
 }
 
 .search-button:hover {
-  background-color: #0f1211;
+  background-color: #005a4c;
   transform: scale(1.1);
 }
 
@@ -618,13 +620,4 @@ function showJobDetails(job) {
   transform: scale(1.02);
   z-index: 1;
 }
-.notification-item {
-  transition: background-color 0.2s ease;
-  border-radius: 10px;
-}
-
-.notification-item:hover {
-  background-color: #f0f0f0;
-}
-
 </style>
