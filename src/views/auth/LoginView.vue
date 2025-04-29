@@ -82,6 +82,7 @@ function handleLogin() {
               <p class="text-center my-2">Log in to your account to continue</p>
               <v-form ref="refVform" fast-fail @submit.prevent="onFormSubmit">
                 <v-text-field
+                  class="my-2"
                   v-model="formData.email"
                   label="Email"
                   variant="outlined"
@@ -118,12 +119,7 @@ function handleLogin() {
                   </Router-link>
                 </div>
               </v-form>
-              <div class="text-center mt-4">
-                <p class="my-4">Or</p>
-                <v-btn icon class="mx-2"><v-icon color="red">mdi-google</v-icon></v-btn>
-                <v-btn icon class="mx-2"><v-icon color="blue">mdi-facebook</v-icon></v-btn>
-                <v-btn icon class="mx-2"><v-icon color="light-blue">mdi-twitter</v-icon></v-btn>
-              </div>
+
               <v-divider class="my-4"></v-divider>
               <h5 class="text-center">
                 Don't have an account?

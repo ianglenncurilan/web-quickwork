@@ -6,29 +6,43 @@ import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase.js'
 
 const router = useRouter()
+const showPassword = ref(false)
+const showPasswordConfirmation = ref(false)
+
+function togglePasswordVisibility(field) {
+  if (field === 'password') {
+    showPassword.value = !showPassword.value
+  } else if (field === 'passwordConfirmation') {
+    showPasswordConfirmation.value = !showPasswordConfirmation.value
+  }
+}
 
 const formDataDefault = ref({
   firstname: '',
   lastname: '',
   email: '',
   password: '',
-  password_confirmation: ''
+  password_confirmation: '',
 })
 
 const formData = ref({
-  ...formDataDefault.value
+  ...formDataDefault.value,
 })
 
 const formAction = ref({
-  ...formActionDefault
+  ...formActionDefault,
 })
 
-const isPasswordVisible = ref(false)
-const refVform = ref()
 
 // Handle form submission
 const handleRegister = async () => {
-  if (!formData.value.firstname || !formData.value.lastname || !formData.value.email || !formData.value.password || !formData.value.password_confirmation) {
+  if (
+    !formData.value.firstname ||
+    !formData.value.lastname ||
+    !formData.value.email ||
+    !formData.value.password ||
+    !formData.value.password_confirmation
+  ) {
     alert('Please fill in all fields.')
     return
   }
@@ -39,7 +53,7 @@ const handleRegister = async () => {
   }
 
   formAction.value = {
-    ...formActionDefault
+    ...formActionDefault,
   }
   formAction.value.formProcess = true
 
@@ -50,9 +64,9 @@ const handleRegister = async () => {
       options: {
         data: {
           firstname: formData.value.firstname,
-          lastname: formData.value.lastname
-        }
-      }
+          lastname: formData.value.lastname,
+        },
+      },
     })
 
     if (error) {
@@ -62,7 +76,9 @@ const handleRegister = async () => {
     } else if (data) {
       console.log(data)
       formAction.value.formSuccessMessage = 'Registration successful!'
-      router.push('/student') // Navigate to the student page after successful registration
+      router.push('/login') // Redirect to the login page after successful registration
+      refVform.value?.reset() // Reset the form
+      Object.assign(formData.value, formDataDefault.value) // Reset formData to default values
     }
   } catch (err) {
     console.error('Unexpected error:', err)
@@ -77,7 +93,7 @@ const handleRegister = async () => {
   <AppLayout>
     <template #content>
       <v-alert
-      v-if="formAction.formSuccessMessage" 
+      v-if="formAction.formSuccessMessage"
       :text="formAction.formSuccessMessage"
       title="Success!"
       type="success"
@@ -88,7 +104,7 @@ const handleRegister = async () => {
       >
       </v-alert>
       <v-alert
-      v-if="formAction.formErrorMessage" 
+      v-if="formAction.formErrorMessage"
       :text="formAction.formErrorMessage"
       title="Error!"
       type="error"
@@ -121,18 +137,19 @@ const handleRegister = async () => {
 
               <h3 class="font-weight-bold text-center">Already Signed up?</h3>
               <p class="text-center">Log in to your account so you can continue building and editing your onboarding flows.</p>
-              <v-btn color="white" outlined class="mt-2" to="/login">LOGIN</v-btn>
+              <v-btn color="white" outlined class="mt-2" to="/">LOGIN</v-btn>
             </v-col>
 
             <!-- Right Section - Register Form -->
             <v-col cols="12" md="7" class="pa-5">
               <div class="ribbon-container">
                 <h3 class="ribbon-text">Sign Up for an Account</h3>
-              </div><br>
+              </div>
+              <br />
 
-              <v-form fast-fail @submit.prevent="handleRegister">
+              <v-form ref="refVform" fast-fail @submit.prevent="handleRegister">
                 <v-row>
-                  <v-col cols="12" md="6">
+                  <v-col cols="12" md="6" class="mb-1">
                     <v-text-field
                       v-model="formData.firstname"
                       :rules="[requiredValidator]"
@@ -142,7 +159,7 @@ const handleRegister = async () => {
                       required
                     ></v-text-field>
                   </v-col>
-                  <v-col cols="12" md="6">
+                  <v-col cols="12" md="6" class="mb-1">
                     <v-text-field
                       v-model="formData.lastname"
                       :rules="[requiredValidator]"
@@ -153,7 +170,7 @@ const handleRegister = async () => {
                     ></v-text-field>
                   </v-col>
                 </v-row>
-                <v-text-field
+                <v-text-field class="mt-1"
                   v-model="formData.email"
                   label="Email"
                   variant="outlined"
@@ -161,33 +178,27 @@ const handleRegister = async () => {
                   :rules="[requiredValidator, emailValidator]"
                 ></v-text-field>
 
-                <v-text-field
+                <v-text-field class="mt-2"
                   v-model="formData.password"
                   label="Password"
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
                   :rules="[requiredValidator, passwordValidator]"
-                  append-inner-icon="mdi-eye"
-                  @click:append-inner="showPassword = !showPassword"
-                ></v-text-field>
-                <v-text-field
-                  v-model="formData.password_confirmation"
-                  label="Password Confirmation"
-                  :type="showPassword ? 'text' : 'password'"
-                  variant="outlined"
-                  required
-                  :rules="[requiredValidator, confirmedValidator]"
-                  append-inner-icon="mdi-eye"
-                  @click:append-inner="showPassword = !showPassword"
+                  :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click:append-inner="togglePasswordVisibility('password')"
                 ></v-text-field>
 
-                <v-select
-  clearable
-  chips
-  label="Select"
-  :items="['Student','Businessman']"
-></v-select>
+                <v-text-field class="mt-4"
+                  v-model="formData.password_confirmation"
+                  label="Password Confirmation"
+                  :type="showPasswordConfirmation ? 'text' : 'password'"
+                  variant="outlined"
+                  required
+                  :rules="[requiredValidator]"
+                  :append-inner-icon="showPasswordConfirmation ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click:append-inner="togglePasswordVisibility('passwordConfirmation')"
+                ></v-text-field>
 
                 <v-checkbox
                   label="I Accept Terms & Conditions"
@@ -196,15 +207,18 @@ const handleRegister = async () => {
                 ></v-checkbox>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" block :disabled="formAction.formProcess" :loading="formActionProcess">Register</v-btn>
+                  <v-btn
+                    class="mt-3 btn-fixed-width"
+                    color="#00412E"
+                    type="submit"
+                    block
+                    :disabled="formAction.formProcess"
+                    :loading="formActionProcess"
+                    >Register</v-btn
+                  >
                 </div>
               </v-form>
-              <div class="text-center mt-4">
-                <p class="my-4">Or</p>
-                <v-btn icon class="mx-2"><v-icon color="red">mdi-google</v-icon></v-btn>
-                <v-btn icon class="mx-2"><v-icon color="blue">mdi-facebook</v-icon></v-btn>
-                <v-btn icon class="mx-2"><v-icon color="light-blue">mdi-twitter</v-icon></v-btn>
-              </div>
+
               <v-divider class="my-4"></v-divider>
             </v-col>
           </v-row>
@@ -220,7 +234,7 @@ const handleRegister = async () => {
 }
 
 .new-here-section {
-  background-color: #328E6E;
+  background-color: #328e6e;
   color: white;
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
@@ -249,7 +263,7 @@ const handleRegister = async () => {
 
 .new-here-section .v-btn:hover {
   background-color: white;
-  color: #00412E;
+  color: #00412e;
 }
 
 .ribbon-container {
@@ -257,7 +271,7 @@ const handleRegister = async () => {
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  background-color: #328E6E; /* Ribbon background color */
+  background-color: #328e6e; /* Ribbon background color */
   color: white;
   padding: 0.5rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
@@ -281,12 +295,12 @@ const handleRegister = async () => {
 .ribbon-container::before {
   left: 0;
   border-width: 10px 10px 0 0;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 
 .ribbon-container::after {
   right: 0;
   border-width: 10px 0 0 10px;
-  border-color: #328E6E transparent transparent transparent;
+  border-color: #328e6e transparent transparent transparent;
 }
 </style>

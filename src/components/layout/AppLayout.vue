@@ -1,11 +1,23 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { isAuthenticated} from '@/utils/supabase'
 
 const theme = ref('light')
 
 function toggleTheme() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
+
+const isLoggedIn = ref(false)
+
+const getLoggedStatus = async () => {
+  isLoggedIn.value = await isAuthenticated()
+}
+
+onMounted(() => {
+  getLoggedStatus()
+})
+
 </script>
 
 <template>
@@ -37,7 +49,11 @@ function toggleTheme() {
           slim
           @click="toggleTheme"
         ></v-btn>
+
+        <ProfileHeader v-if="isLoggedIn"> </ProfileHeader>
       </v-app-bar>
+
+
 
       <!-- Main Content -->
       <v-main>
@@ -51,4 +67,3 @@ function toggleTheme() {
     </v-app>
   </v-responsive>
 </template>
-

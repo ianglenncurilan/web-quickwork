@@ -8,8 +8,18 @@ export const supabase = createClient(
 
 // Define and export formActionDefault
 export const formActionDefault = {
-  formProcessing: false,
+  formProcess: false,
   formStatus: 200,
   formErrorMessage: '',
   formSuccessMessage: '',
+}
+
+export const isAuthenticated = async () => {
+  const {data , error} = await supabase.auth.getSession()
+  if (error) {
+    console.error('Error getting session:', error.message)
+    return false
+  }
+
+  return !data.session
 }
