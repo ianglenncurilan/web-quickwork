@@ -6,6 +6,16 @@ import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase.js'
 
 const router = useRouter()
+const showPassword = ref(false)
+const showPasswordConfirmation = ref(false)
+
+function togglePasswordVisibility(field) {
+  if (field === 'password') {
+    showPassword.value = !showPassword.value
+  } else if (field === 'passwordConfirmation') {
+    showPasswordConfirmation.value = !showPasswordConfirmation.value
+  }
+}
 
 const formDataDefault = ref({
   firstname: '',
@@ -67,7 +77,7 @@ const handleRegister = async () => {
     } else if (data) {
       console.log(data)
       formAction.value.formSuccessMessage = 'Registration successful!'
-      router.push('/student') // Navigate to the student page after successful registration
+      router.push('/login') // Redirect to the login page after successful registration
       refVform.value?.reset() // Reset the form
       Object.assign(formData.value, formDataDefault.value) // Reset formData to default values
     }
@@ -83,38 +93,36 @@ const handleRegister = async () => {
 <template>
   <AppLayout>
     <template #content>
-      <v-row>
-        <v-col cols="10"></v-col>
-        <v-col cols="2">
-          <v-alert
-            v-if="formAction.formSuccessMessage"
-            :text="formAction.formSuccessMessage"
-            title="Success!"
-            type="success"
-            variant="tonal"
-            density="compact"
-            border="start"
-            closable
-          >
-          </v-alert>
-          <v-alert
-            v-if="formAction.formErrorMessage"
-            :text="formAction.formErrorMessage"
-            title="Error!"
-            type="error"
-            variant="tonal"
-            density="compact"
-            border="start"
-            closable
-          >
-          </v-alert
-        ></v-col>
-      </v-row>
-
       <v-container class="d-flex align-center justify-center" style="min-height: 80vh">
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
             <!-- Left Section - Sign Up Prompt -->
+            <v-row>
+              <v-col cols="2">
+                <v-alert
+                  v-if="formAction.formSuccessMessage"
+                  :text="formAction.formSuccessMessage"
+                  title="Success!"
+                  type="success"
+                  variant="tonal"
+                  density="compact"
+                  border="start"
+                  closable
+                >
+                </v-alert>
+                <v-alert
+                  v-if="formAction.formErrorMessage"
+                  :text="formAction.formErrorMessage"
+                  title="Error!"
+                  type="error"
+                  variant="tonal"
+                  density="compact"
+                  border="start"
+                  closable
+                >
+                </v-alert
+              ></v-col>
+            </v-row>
             <v-col
               cols="12"
               md="5"
@@ -133,7 +141,7 @@ const handleRegister = async () => {
                 Log in to your account so you can continue building and editing your onboarding
                 flows.
               </p>
-              <v-btn color="white" outlined class="mt-2" to="/">LOGIN</v-btn>
+              <v-btn color="white" outlined class="mt-2" to="/login">LOGIN</v-btn>
             </v-col>
 
             <!-- Right Section - Register Form -->
@@ -145,7 +153,7 @@ const handleRegister = async () => {
 
               <v-form ref="refVform" fast-fail @submit.prevent="handleRegister">
                 <v-row>
-                  <v-col cols="12" md="6">
+                  <v-col cols="12" md="6" class="mb-1">
                     <v-text-field
                       v-model="formData.firstname"
                       :rules="[requiredValidator]"
@@ -155,7 +163,7 @@ const handleRegister = async () => {
                       required
                     ></v-text-field>
                   </v-col>
-                  <v-col cols="12" md="6">
+                  <v-col cols="12" md="6" class="mb-1">
                     <v-text-field
                       v-model="formData.lastname"
                       :rules="[requiredValidator]"
@@ -166,7 +174,7 @@ const handleRegister = async () => {
                     ></v-text-field>
                   </v-col>
                 </v-row>
-                <v-text-field
+                <v-text-field class="mt-1"
                   v-model="formData.email"
                   label="Email"
                   variant="outlined"
@@ -174,25 +182,26 @@ const handleRegister = async () => {
                   :rules="[requiredValidator, emailValidator]"
                 ></v-text-field>
 
-                <v-text-field
+                <v-text-field class="mt-2"
                   v-model="formData.password"
                   label="Password"
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   required
                   :rules="[requiredValidator, passwordValidator]"
-                  append-inner-icon="mdi-eye"
-                  @click:append-inner="showPassword = !showPassword"
+                  :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click:append-inner="togglePasswordVisibility('password')"
                 ></v-text-field>
-                <v-text-field
+
+                <v-text-field class="mt-4"
                   v-model="formData.password_confirmation"
                   label="Password Confirmation"
-                  :type="showPassword ? 'text' : 'password'"
+                  :type="showPasswordConfirmation ? 'text' : 'password'"
                   variant="outlined"
                   required
                   :rules="[requiredValidator]"
-                  append-inner-icon="mdi-eye"
-                  @click:append-inner="showPassword = !showPassword"
+                  :append-inner-icon="showPasswordConfirmation ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click:append-inner="togglePasswordVisibility('passwordConfirmation')"
                 ></v-text-field>
 
                 <v-checkbox

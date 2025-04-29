@@ -51,4 +51,3 @@ function toggleTheme() {
     </v-app>
   </v-responsive>
 </template>
-
