@@ -2,10 +2,13 @@
 import { ref } from 'vue'
 
 const theme = ref('light')
-
-function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
+function scrollToSection(id) {
+  const el = document.getElementById(id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
 }
+
 </script>
 
 <template>
@@ -19,9 +22,9 @@ function toggleTheme() {
           <img src="@/assets/qkwrk.png" alt="logo" width="75px" height="75px" />
         </v-app-bar-title>
 
-        <v-btn class="text-white" to="/register"> Feature </v-btn>
-        <v-btn class="text-white" to="/login"> About </v-btn>
-        <v-btn class="text-white" to="/register"> FAQ </v-btn>
+        <v-btn class="text-white" @click="scrollToSection('feature')"> Feature </v-btn>
+        <v-btn class="text-white" @click="scrollToSection('feature')"> About </v-btn>
+        <v-btn class="text-white" @click="scrollToSection('feature')"> FAQ </v-btn>
 
         <v-btn icon>
           <v-icon>mdi-heart</v-icon>
@@ -61,8 +64,67 @@ function toggleTheme() {
             </v-col>
           </v-row>
 
-          <!-- Why Choose Section -->
-          <v-row class="text-center mt-16" justify="center">
+          <!-- Feature Section -->
+          <v-row class="text-center mt-16" justify="center" id="feature">
+            <v-col cols="12">
+              <h2 class="white--text mb-4 my-5">Why Choose QuickWork?</h2>
+              <p class="subtitle-1 white--text mb-10 my-5">
+                We simplify the job search with intelligent tools designed to help you land the
+                right opportunities quickly and efficiently.
+              </p>
+            </v-col>
+
+            <!-- Card 1 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+                <v-icon size="40" color="white">mdi-magnify</v-icon>
+                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
+                <p class="white--text">
+                  Find the perfect workflow templates with our AI-powered search engine that
+                  understands your specific needs.
+                </p>
+              </v-card>
+            </v-col>
+
+            <!-- Card 2 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+                <v-icon size="40" color="white">mdi-flash</v-icon>
+                <h3 class="white--text mt-4 mb-2">Quick Apply</h3>
+                <p class="white--text">
+                  Implement workflows instantly with our one-click system. No more lengthy setup
+                  processes or complicated configurations.
+                </p>
+              </v-card>
+            </v-col>
+
+            <!-- Card 3 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+                <v-icon size="40" color="white">mdi-robot</v-icon>
+                <h3 class="white--text mt-4 mb-2">AI Personalization</h3>
+                <p class="white--text">
+                  Our AI learns your preferences and suggests optimizations to make your workflows
+                  more efficient and tailored to your style.
+                </p>
+              </v-card>
+            </v-col>
+          </v-row>
+
+           <!-- Why Choose QW section -->
+           <v-row class="text-center mt-16" justify="center">
             <v-col cols="12">
               <h2 class="white--text mb-4 my-5">Why Choose QuickWork?</h2>
               <p class="subtitle-1 white--text mb-10 my-5">
