@@ -105,8 +105,8 @@ function postJob() {
         ...jobForm.value,
       }
     }
-    isEditing.value = false
-    editingJobId.value = null
+    isEditing.value = false // Exit editing mode
+    editingJobId.value = null // Clear the editing job ID
   } else {
     // Add new job
     const newJob = {
@@ -127,7 +127,7 @@ function postJob() {
     link: '',
   }
 
-  closeJobPostForm()
+  closeJobPostForm() // Close the job form
 }
 
 // Delete job
@@ -139,10 +139,10 @@ function deleteJob(id) {
 
 // Edit job
 function editJob(job) {
-  jobForm.value = { ...job }
-  editingJobId.value = job.id
-  isEditing.value = true
-  isFormVisible.value = true
+  jobForm.value = { ...job } // Populate the form with the selected job's data
+  editingJobId.value = job.id // Set the ID of the job being edited
+  isEditing.value = true // Enable editing mode
+  isFormVisible.value = true // Show the job form
 }
 
 // Show job details
@@ -174,14 +174,14 @@ const filteredJobs = computed(() => {
                   <v-img src="/images/profile.jpg" alt="Profile Picture" />
                 </v-avatar>
 
-               <!-- Hide name and role when collapsed -->
+                <!-- Hide name and role when collapsed -->
                 <transition name="fade">
-                   <div v-if="!isSidebarCollapsed">
-                      <p class="profile-name">Jasmin</p>
-                      <p class="profile-role">Business Owner</p>
-                   </div>
-                 </transition>
-             </div>
+                  <div v-if="!isSidebarCollapsed">
+                    <p class="profile-name">Jasmin</p>
+                    <p class="profile-role">Business Owner</p>
+                  </div>
+                </transition>
+              </div>
               <!-- Arrow Button -->
               <button class="toggle-btn" @click="toggleSidebar">
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
@@ -204,7 +204,14 @@ const filteredJobs = computed(() => {
                     </a>
                   </li>
                   <li>
-                    <a href="#" @click="() => { isFormVisible = false }">
+                    <a
+                      href="#"
+                      @click="
+                        () => {
+                          isFormVisible = false
+                        }
+                      "
+                    >
                       <i class="icon mdi mdi-briefcase-outline"></i>
                       <span v-if="!isSidebarCollapsed">Job Posted</span>
                     </a>
@@ -373,6 +380,12 @@ const filteredJobs = computed(() => {
               <p class="text-caption text-grey-darken-1">Monthly rate: {{ selectedJob.rate }}</p>
               <p class="text-caption text-grey-darken-1">Job link: {{ selectedJob.link }}</p>
             </v-card>
+
+            <!-- Message when no job is selected -->
+            <v-card v-else class="pa-6 rounded-xl d-flex align-center justify-center" elevation="5">
+              <v-icon size="36" color="grey">mdi-cursor-pointer</v-icon>
+              <p class="ml-2 text-grey-darken-1">Select a job to view details</p>
+            </v-card>
           </v-col>
         </v-row>
       </v-container>
@@ -381,7 +394,6 @@ const filteredJobs = computed(() => {
 </template>
 
 <style scoped>
-
 .left-card {
   transition: transform 0.3s ease;
 }
