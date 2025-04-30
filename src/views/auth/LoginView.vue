@@ -132,7 +132,7 @@ function handleLogin() {
                   label="Email"
                   variant="outlined"
                   required
-                  :rules="[emailValidator]"
+                  :rules="[requiredValidator, emailValidator]"
                 ></v-text-field>
                 <v-text-field
                   v-model="formData.password"
@@ -145,23 +145,20 @@ function handleLogin() {
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
 
-                <!-- Dropdown for selecting role -->
-                <div class="dropdown-container">
-                  <label for="role-select" class="dropdown-label">Select Role</label>
-                  <div class="custom-dropdown">
-                    <select id="role-select" v-model="selectedRole" class="dropdown-select">
-                      <option value="" disabled>Select Role</option>
-                      <option v-for="role in roles" :key="role" :value="role">
-                        {{ role }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
+                <v-select
+                class="dropdown-label mt-3"
+                  v-model="selectedRole"
+                  :items="roles"
+                  label="Select Role"
+                  :rules="[requiredValidator]"
+                  outlined
+                  required
+
+                >
+                </v-select>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit"
-                    >LOGIN</v-btn
-                  >
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit">LOGIN</v-btn>
                 </div>
                 <div class="text-center mt-2">
                   <Router-link to="/forgot-password" class="forgot-password-link">
