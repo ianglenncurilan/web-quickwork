@@ -282,4 +282,20 @@ const handleRegister = async () => {
   border-width: 10px 0 0 10px;
   border-color: #328e6e transparent transparent transparent;
 }
+
+/* Hover and click styles for buttons */
+.v-btn {
+  transition: all 0.3s ease; /* Smooth transition for hover and click effects */
+}
+
+.v-btn:hover {
+  transform: scale(1.05); /* Slightly enlarge the button on hover */
+  background-color: #00412e; /* Darken the background color */
+  color: white; /* Change text color */
+}
+
+.v-btn:active {
+  transform: scale(0.95); /* Slightly shrink the button on click */
+  background-color: #002d1f; /* Darker background color on click */
+}
 </style>
