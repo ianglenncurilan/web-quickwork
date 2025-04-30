@@ -115,8 +115,8 @@ function postJob() {
     if (index !== -1) {
       jobs.value[index] = { ...jobs.value[index], ...form }
     }
-    isEditing.value = false
-    editingJobId.value = null
+    isEditing.value = false // Exit editing mode
+    editingJobId.value = null // Clear the editing job ID
   } else {
     const newJob = { id: Date.now(), ...form }
     jobs.value.unshift(newJob)
@@ -136,19 +136,11 @@ function resetForm() {
     rate: '',
     link: '',
   }
+
+  closeJobPostForm()
 }
 
-// Job Management
-function loadJobsFromStorage() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    jobs.value = stored ? JSON.parse(stored) : []
-  } catch (err) {
-    console.error('Failed to load jobs:', err)
-    jobs.value = []
-  }
-}
-
+// Delete job
 function deleteJob(id) {
   if (confirm('Are you sure you want to delete this job?')) {
     jobs.value = jobs.value.filter((job) => job.id !== id)
@@ -156,10 +148,10 @@ function deleteJob(id) {
 }
 
 function editJob(job) {
-  jobForm.value = { ...job }
-  editingJobId.value = job.id
-  isEditing.value = true
-  isFormVisible.value = true
+  jobForm.value = { ...job } // Populate the form with the selected job's data
+  editingJobId.value = job.id // Set the ID of the job being edited
+  isEditing.value = true // Enable editing mode
+  isFormVisible.value = true // Show the job form
 }
 
 function showJobDetails(job) {
@@ -175,6 +167,19 @@ function showJobDetails(job) {
           <!-- Left Column: Navigation -->
           <v-col cols="3" class="left-column my-5">
             <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
+              <div class="profile-section">
+                <v-avatar :size="isSidebarCollapsed ? 50 : 80" class="mb-2">
+                  <v-img src="/images/profile.jpg" alt="Profile Picture" />
+                </v-avatar>
+
+               <!-- Hide name and role when collapsed -->
+                <transition name="fade">
+                   <div v-if="!isSidebarCollapsed">
+                      <p class="profile-name">Jasmin</p>
+                      <p class="profile-role">Business Owner</p>
+                   </div>
+                 </transition>
+             </div>
               <!-- Arrow Button -->
               <button class="toggle-btn" @click="toggleSidebar">
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
@@ -197,7 +202,7 @@ function showJobDetails(job) {
                     </a>
                   </li>
                   <li>
-                    <a href="#" @click="showPostedJobs">
+                    <a href="#" @click="() => { isFormVisible = false }">
                       <i class="icon mdi mdi-briefcase-outline"></i>
                       <span v-if="!isSidebarCollapsed">Job Posted</span>
                     </a>
@@ -235,52 +240,6 @@ function showJobDetails(job) {
                 </button>
               </div>
             </div>
-
-            <v-card
-              v-if="isNotificationVisible"
-              class="pa-4 mb-4"
-              elevation="2"
-              style="height: 400px"
-            >
-              <div class="d-flex justify-space-between align-center mb-4">
-                <div class="d-flex align-center">
-                  <v-icon class="mr-2" color="secondary">mdi-bell-outline</v-icon>
-                  <h4 class="mb-0">Notifications</h4>
-                </div>
-                <v-btn
-                  @click="isNotificationVisible = false"
-                  color="green"
-                  class="text-white font-weight-bold px-4 py-2"
-                  elevation="2"
-                  variant="flat"
-                >
-                  <v-icon left>mdi-close</v-icon>
-                  Close
-                </v-btn>
-              </div>
-
-              <v-divider class="mb-4"></v-divider>
-
-              <v-list dense nav>
-                <v-list-item
-                  v-for="message in notificationMessages"
-                  :key="message.id"
-                  class="notification-item"
-                >
-                  <v-list-item-avatar>
-                    <v-icon color="deep-purple">mdi-bell-ring</v-icon>
-                  </v-list-item-avatar>
-
-                  <v-list-item-content>
-                    <v-list-item-title class="font-weight-bold">
-                      {{ message.text }}
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-
-                <v-divider v-if="notificationMessages.length" class="my-2" />
-              </v-list>
-            </v-card>
 
             <!-- Job Form (Middle) -->
             <v-card v-if="isFormVisible" class="pa-4 mb-6 rounded-xl" elevation="1" flat>
@@ -402,7 +361,7 @@ function showJobDetails(job) {
 
           <!-- Right Column: Job Details -->
           <v-col cols="3" class="left-card">
-            <v-card v-if="selectedJob" class="pa-6" elevation="5">
+            <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
               <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
               <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
               <p class="text-body-2 mb-2 text-grey-darken-1">
@@ -411,6 +370,12 @@ function showJobDetails(job) {
               <p class="text-caption text-grey mb-2">Job Type: {{ selectedJob.type }}</p>
               <p class="text-caption text-grey-darken-1">Monthly rate: {{ selectedJob.rate }}</p>
               <p class="text-caption text-grey-darken-1">Job link: {{ selectedJob.link }}</p>
+            </v-card>
+
+            <!-- Message when no job is selected -->
+            <v-card v-else class="pa-6 rounded-xl d-flex align-center justify-center" elevation="5">
+              <v-icon size="36" color="grey">mdi-cursor-pointer</v-icon>
+              <p class="ml-2 text-grey-darken-1">Select a job to view details</p>
             </v-card>
           </v-col>
         </v-row>
@@ -492,7 +457,7 @@ function showJobDetails(job) {
 /* Sidebar Styles */
 .sidebar {
   width: 350px;
-  background-color: #90c67c;
+  background-color: #e1eebc;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

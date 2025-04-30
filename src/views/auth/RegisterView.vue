@@ -2,6 +2,7 @@
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
 import { requiredValidator, emailValidator, passwordValidator } from '@/utils/validators'
+import AlertNotification from '@/components/layout/commons/AlertNotification.vue'
 import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase.js'
 
@@ -76,8 +77,8 @@ const handleRegister = async () => {
     } else if (data) {
       console.log(data)
       formAction.value.formSuccessMessage = 'Registration successful!'
-      router.push('/login') // Redirect to the login page after successful registration
-      refVform.value?.reset() // Reset the form
+      router.replace('/login') // Redirect to the login page after successful registration
+
       Object.assign(formData.value, formDataDefault.value) // Reset formData to default values
     }
   } catch (err) {
@@ -123,6 +124,7 @@ const handleRegister = async () => {
 
             <!-- Left Section - Sign Up Prompt -->
             <v-col
+
               cols="12"
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
@@ -146,7 +148,12 @@ const handleRegister = async () => {
                 <h3 class="ribbon-text">Sign Up for an Account</h3>
               </div>
               <br />
-
+              <v-col>
+                <AlertNotification
+                :formSuccessMessage="formAction.formSuccessMessage"
+                :formErrorMessage="formAction.formErrorMessage"
+              ></AlertNotification>
+              </v-col>
               <v-form ref="refVform" fast-fail @submit.prevent="handleRegister">
                 <v-row>
                   <v-col cols="12" md="6" class="mb-1">
@@ -302,5 +309,21 @@ const handleRegister = async () => {
   right: 0;
   border-width: 10px 0 0 10px;
   border-color: #328e6e transparent transparent transparent;
+}
+
+/* Hover and click styles for buttons */
+.v-btn {
+  transition: all 0.3s ease; /* Smooth transition for hover and click effects */
+}
+
+.v-btn:hover {
+  transform: scale(1.05); /* Slightly enlarge the button on hover */
+  background-color: #00412e; /* Darken the background color */
+  color: white; /* Change text color */
+}
+
+.v-btn:active {
+  transform: scale(0.95); /* Slightly shrink the button on click */
+  background-color: #002d1f; /* Darker background color on click */
 }
 </style>
