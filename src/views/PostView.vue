@@ -36,10 +36,10 @@ const searchQuery = ref('')
 const isSidebarCollapsed = ref(false)
 const isNotificationVisible = ref(false)
 
-// Notifications
+// Notification
 const notificationMessages = ref([])
 
-// Lifecycle Hook
+// Lifecycle Hook 
 onMounted(() => {
   loadJobsFromStorage()
 })
