@@ -132,7 +132,7 @@ function handleLogin() {
                   label="Email"
                   variant="outlined"
                   required
-                  :rules="[emailValidator]"
+                  :rules="[requiredValidator, emailValidator]"
                 ></v-text-field>
                 <v-text-field
                   v-model="formData.password"
@@ -146,15 +146,20 @@ function handleLogin() {
                 ></v-text-field>
 
                 <!-- Dropdown for selecting role -->
-                <v-select
-  clearable
-  chips
-  label="Select"
-  :items="['Student','Businessman']"
-></v-select>
+                <div class="dropdown-container">
+                  <label for="role-select" class="dropdown-label">Select Role</label>
+                  <div class="custom-dropdown">
+                    <select id="role-select" v-model="selectedRole" class="dropdown-select">
+                      <option value="" disabled>Select Role</option>
+                      <option v-for="role in roles" :key="role" :value="role">
+                        {{ role }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit" to="/post"
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit"
                     >LOGIN</v-btn
                   >
                 </div>
