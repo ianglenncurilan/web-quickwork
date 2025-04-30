@@ -3,6 +3,14 @@ import { ref } from 'vue'
 
 const theme = ref('light')
 
+function scrollToSection(id) {
+  const element = document.getElementById(id)
+  if (element) {
+    const yOffset = -70 
+    const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
+    window.scrollTo({ top: y, behavior: 'smooth' })
+  }
+}
 
 </script>
 
@@ -17,9 +25,10 @@ const theme = ref('light')
           <img src="@/assets/qkwrk.png" alt="logo" width="75px" height="75px" />
         </v-app-bar-title>
 
+        <v-btn class="text-white" @click="scrollToSection('home')"> Home </v-btn>
         <v-btn class="text-white" @click="scrollToSection('feature')"> Feature </v-btn>
-        <v-btn class="text-white" @click="scrollToSection('feature')"> About </v-btn>
-        <v-btn class="text-white" @click="scrollToSection('feature')"> FAQ </v-btn>
+        <v-btn class="text-white" @click="scrollToSection('about')"> About </v-btn>
+        <v-btn class="text-white" @click="scrollToSection('faqs')"> FAQ </v-btn>
 
         <v-btn icon>
           <v-icon>mdi-heart</v-icon>
@@ -34,7 +43,7 @@ const theme = ref('light')
       <!-- Main Content -->
       <v-container fluid>
         <v-container>
-          <v-row align="center" justify="center" style="height: 100vh">
+          <v-row align="center" justify="center" id="home" style="height: 100vh">
             <!-- Left Image -->
            <v-col cols="12" md="6" class="text-center">
              <img src="@/assets/homepic2.jpg" alt="Intern Illustration" style="max-width: 100%; display: block; margin: 0 auto"/>
@@ -60,9 +69,9 @@ const theme = ref('light')
           </v-row>
 
           <!-- Feature Section -->
-          <v-row class="text-center mt-16" justify="center">
+          <v-row class="text-center mt-16" justify="center" id="feature">
             <v-col cols="12">
-              <h2 class="white--text mb-4 my-5" id="feature">Features</h2>
+              <h2 class="white--text mb-4 my-5">Features</h2>
               <p class="subtitle-1 white--text mb-10 my-5">
                 Discover powerful tools that help students find flexible, skill-matching jobs faster and easier.
               </p>
@@ -75,59 +84,10 @@ const theme = ref('light')
                 elevation="4"
                 style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
               >
-                <v-icon size="40" color="white">mdi-magnify</v-icon>
-                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
+              <v-icon size="40" color="white">mdi-account-search</v-icon>
+                <h3 class="white--text mt-4 mb-2">Smart Job Matching</h3>
                 <p class="white--text">
-                  Find the perfect workflow templates with our AI-powered search engine that
-                  understands your specific needs.
-                </p>
-              </v-card>
-            </v-col>
-
-            <!-- Card 1 -->
-            <v-col cols="12" md="4">
-              <v-card
-                class="pa-6"
-                elevation="4"
-                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
-              >
-                <v-icon size="40" color="white">mdi-magnify</v-icon>
-                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
-                <p class="white--text">
-                  Find the perfect workflow templates with our AI-powered search engine that
-                  understands your specific needs.
-                </p>
-              </v-card>
-            </v-col>
-
-            <!-- Card 1 -->
-            <v-col cols="12" md="4">
-              <v-card
-                class="pa-6"
-                elevation="4"
-                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
-              >
-                <v-icon size="40" color="white">mdi-magnify</v-icon>
-                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
-                <p class="white--text">
-                  Find the perfect workflow templates with our AI-powered search engine that
-                  understands your specific needs.
-                </p>
-              </v-card>
-            </v-col>
-
-            <!-- Card 1 -->
-            <v-col cols="12" md="4">
-              <v-card
-                class="pa-6"
-                elevation="4"
-                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
-              >
-                <v-icon size="40" color="white">mdi-magnify</v-icon>
-                <h3 class="white--text mt-4 mb-2">Smart Search</h3>
-                <p class="white--text">
-                  Find the perfect workflow templates with our AI-powered search engine that
-                  understands your specific needs.
+                  Automatically recommends jobs based on students’ skills, course, and availability.
                 </p>
               </v-card>
             </v-col>
@@ -139,11 +99,10 @@ const theme = ref('light')
                 elevation="4"
                 style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
               >
-                <v-icon size="40" color="white">mdi-flash</v-icon>
-                <h3 class="white--text mt-4 mb-2">Quick Apply</h3>
+              <v-icon size="40" color="white">mdi-calendar-clock</v-icon>
+                <h3 class="white--text mt-4 mb-2">Schedule-Based Filters</h3>
                 <p class="white--text">
-                  Implement workflows instantly with our one-click system. No more lengthy setup
-                  processes or complicated configurations.
+                  Lets students filter jobs that fit around their class schedules and preferred work hours.
                 </p>
               </v-card>
             </v-col>
@@ -155,11 +114,55 @@ const theme = ref('light')
                 elevation="4"
                 style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
               >
-                <v-icon size="40" color="white">mdi-robot</v-icon>
-                <h3 class="white--text mt-4 mb-2">AI Personalization</h3>
+              <v-icon size="40" color="white">mdi-flash</v-icon>
+                <h3 class="white--text mt-4 mb-2">Quick Application</h3>
                 <p class="white--text">
-                  Our AI learns your preferences and suggests optimizations to make your workflows
-                  more efficient and tailored to your style.
+                  Enables one-click apply using pre-filled profiles and resumes to save time.
+                </p>
+              </v-card>
+            </v-col>
+
+            <!-- Card 4 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+              <v-icon size="40" color="white">mdi-progress-check</v-icon>
+                <h3 class="white--text mt-4 mb-2">Application Tracker</h3>
+                <p class="white--text">
+                  Monitors the status of each job application in a clean dashboard (e.g. “Pending,” “Viewed,” “Hired”).
+                </p>
+              </v-card>
+            </v-col>
+
+            <!-- Card 5 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+              <v-icon size="40" color="white">mdi-handshake</v-icon>
+                <h3 class="white--text mt-4 mb-2">Student-Friendly Employers Only</h3>
+                <p class="white--text">
+                  Connects students only with verified employers who offer flexible, safe, and legal job options.
+                </p>
+              </v-card>
+            </v-col>
+
+            <!-- Card 6 -->
+            <v-col cols="12" md="4">
+              <v-card
+                class="pa-6"
+                elevation="4"
+                style="background: linear-gradient(135deg, #67ae6e, #e1eebc); border-radius: 16px"
+              >
+              <v-icon size="40" color="white">mdi-bell-ring</v-icon>
+                <h3 class="white--text mt-4 mb-2">Real-Time Job Alerts</h3>
+                <p class="white--text">
+                  Sends instant notifications when new job postings match a student’s profile, so they never miss an opportunity.
                 </p>
               </v-card>
             </v-col>
