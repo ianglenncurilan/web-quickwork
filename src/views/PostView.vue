@@ -1,24 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import { computed } from 'vue'
-
-const filteredJobs = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
-  if (!query) return jobs.value
-  return jobs.value.filter(
-    (job) =>
-      job.title.toLowerCase().includes(query) ||
-      job.description.toLowerCase().includes(query) ||
-      job.company?.toLowerCase().includes(query),
-  )
-})
+import { ref, onMounted, watch, computed } from 'vue'
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings'
 
-// States
-const jobs = ref([])
+// Form state
 const jobForm = ref({
   title: '',
   company: '',
@@ -28,23 +15,52 @@ const jobForm = ref({
   rate: '',
   link: '',
 })
+
+// Job list
+const jobs = ref([])
+
+// Edit mode
 const isEditing = ref(false)
 const editingJobId = ref(null)
-const isFormVisible = ref(false)
+const isFormVisible = ref(false) // Track form visibility
 const selectedJob = ref(null)
 const searchQuery = ref('')
+
+// Sidebar collapse state
 const isSidebarCollapsed = ref(false)
-const isNotificationVisible = ref(false)
 
-// Notification
-const notificationMessages = ref([])
+// Function to toggle sidebar collapse
+function toggleSidebar() {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
 
-// Lifecycle Hook 
+// Function to open the job post form
+function openJobPostForm() {
+  isFormVisible.value = true // Show the job form
+}
+
+// Function to close the job post form
+function closeJobPostForm() {
+  isFormVisible.value = false // Hide the job form
+}
+
+// Load jobs from localStorage
+function loadJobsFromStorage() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    const parsed = stored ? JSON.parse(stored) : []
+    jobs.value = Array.isArray(parsed) ? parsed : []
+  } catch (err) {
+    console.error('Failed to load jobs from localStorage:', err)
+    jobs.value = []
+  }
+}
+
 onMounted(() => {
   loadJobsFromStorage()
 })
 
-// Watchers
+// Watch jobs and update localStorage
 watch(
   jobs,
   (newVal) => {
@@ -53,38 +69,7 @@ watch(
   { deep: true },
 )
 
-// =============================
-// Sidebar
-// =============================
-function toggleSidebar() {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
-// =============================
-// Notifications
-// =============================
-function toggleNotification() {
-  isNotificationVisible.value = !isNotificationVisible.value
-  isFormVisible.value = false
-  selectedJob.value = null
-}
-
-// Job Form
-function openJobPostForm() {
-  isNotificationVisible.value = false
-  selectedJob.value = null
-  isFormVisible.value = true
-}
-
-function closeJobPostForm() {
-  isFormVisible.value = false
-}
-function showPostedJobs() {
-  isFormVisible.value = false // optional: close the form if open
-  isNotificationVisible.value = false
-  selectedJob.value = null
-  // Pwede pud nimo i-toggle or i-set ang filter state diri
-}
+// Upload image
 function handleImageUpload(event) {
   const file = event.target?.files?.[0] || event
   if (file) {
@@ -96,37 +81,42 @@ function handleImageUpload(event) {
   }
 }
 
+// Post or update job
 function postJob() {
-  const form = jobForm.value
+  // Validate form fields
   if (
-    !form.title.trim() ||
-    !form.description.trim() ||
-    !form.type.trim() ||
-    !form.rate.trim() ||
-    !form.link.trim() ||
-    !form.imageUrl
+    !jobForm.value.title.trim() ||
+    !jobForm.value.description.trim() ||
+    !jobForm.value.type.trim() ||
+    !jobForm.value.rate.trim() ||
+    !jobForm.value.link.trim() ||
+    !jobForm.value.imageUrl
   ) {
     alert('Please complete all fields.')
     return
   }
 
   if (isEditing.value && editingJobId.value !== null) {
+    // Update existing job
     const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
     if (index !== -1) {
-      jobs.value[index] = { ...jobs.value[index], ...form }
+      jobs.value[index] = {
+        ...jobs.value[index],
+        ...jobForm.value,
+      }
     }
     isEditing.value = false // Exit editing mode
     editingJobId.value = null // Clear the editing job ID
   } else {
-    const newJob = { id: Date.now(), ...form }
+    // Add new job
+    const newJob = {
+      id: Date.now(),
+      ...jobForm.value,
+    }
     jobs.value.unshift(newJob)
   }
 
-  resetForm()
-  closeJobPostForm()
-}
-
-function resetForm() {
+  // Reset form
   jobForm.value = {
     title: '',
     company: '',
@@ -137,7 +127,7 @@ function resetForm() {
     link: '',
   }
 
-  closeJobPostForm()
+  closeJobPostForm() // Close the job form
 }
 
 // Delete job
@@ -147,6 +137,7 @@ function deleteJob(id) {
   }
 }
 
+// Edit job
 function editJob(job) {
   jobForm.value = { ...job } // Populate the form with the selected job's data
   editingJobId.value = job.id // Set the ID of the job being edited
@@ -154,9 +145,20 @@ function editJob(job) {
   isFormVisible.value = true // Show the job form
 }
 
+// Show job details
 function showJobDetails(job) {
   selectedJob.value = job
 }
+
+// Filtered jobs based on search
+const filteredJobs = computed(() => {
+  const searchText = searchQuery.value.toLowerCase()
+  return jobs.value.filter((job) =>
+    [job.title, job.company, job.description].some((field) =>
+      field.toLowerCase().includes(searchText),
+    ),
+  )
+})
 </script>
 
 <template>
@@ -172,14 +174,14 @@ function showJobDetails(job) {
                   <v-img src="/images/profile.jpg" alt="Profile Picture" />
                 </v-avatar>
 
-               <!-- Hide name and role when collapsed -->
+                <!-- Hide name and role when collapsed -->
                 <transition name="fade">
-                   <div v-if="!isSidebarCollapsed">
-                      <p class="profile-name">Jasmin</p>
-                      <p class="profile-role">Business Owner</p>
-                   </div>
-                 </transition>
-             </div>
+                  <div v-if="!isSidebarCollapsed">
+                    <p class="profile-name">Jasmin</p>
+                    <p class="profile-role">Business Owner</p>
+                  </div>
+                </transition>
+              </div>
               <!-- Arrow Button -->
               <button class="toggle-btn" @click="toggleSidebar">
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
@@ -187,14 +189,14 @@ function showJobDetails(job) {
 
               <!-- Navigation Menu -->
               <nav class="navigation-menu">
+                <h1 class="mx-3 my-3 title-qw">Quickwork</h1>
                 <ul>
                   <li>
-                    <a href="#" @click.prevent="toggleNotification">
+                    <a href="#" @click="openJobPostForm">
                       <i class="icon mdi mdi-bell-outline"></i>
                       <span v-if="!isSidebarCollapsed">Notification</span>
                     </a>
                   </li>
-
                   <li>
                     <a href="#" @click="openJobPostForm">
                       <i class="icon mdi mdi-plus-circle-outline"></i>
@@ -202,13 +204,20 @@ function showJobDetails(job) {
                     </a>
                   </li>
                   <li>
-                    <a href="#" @click="() => { isFormVisible = false }">
+                    <a
+                      href="#"
+                      @click="
+                        () => {
+                          isFormVisible = false
+                        }
+                      "
+                    >
                       <i class="icon mdi mdi-briefcase-outline"></i>
                       <span v-if="!isSidebarCollapsed">Job Posted</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" @click="">
+                    <a href="/">
                       <i class="icon mdi mdi-star-outline"></i>
                       <span v-if="!isSidebarCollapsed">Review</span>
                     </a>
@@ -240,6 +249,7 @@ function showJobDetails(job) {
                 </button>
               </div>
             </div>
+
 
             <!-- Job Form (Middle) -->
             <v-card v-if="isFormVisible" class="pa-4 mb-6 rounded-xl" elevation="1" flat>
@@ -323,7 +333,7 @@ function showJobDetails(job) {
                   class="d-flex"
                   @click="showJobDetails(job)"
                 >
-                  <v-card class="pa-5 w-100" col="12" md="7" elevation="3">
+                  <v-card class="pa-5 rounded-xl w-100 zoom-hover" col="12" md="7" elevation="3">
                     <v-row no-gutters align="center">
                       <v-col cols="auto">
                         <v-img
@@ -360,7 +370,7 @@ function showJobDetails(job) {
           </v-col>
 
           <!-- Right Column: Job Details -->
-          <v-col cols="3" class="left-card">
+          <v-col cols="3" class="">
             <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
               <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
               <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
@@ -449,6 +459,17 @@ function showJobDetails(job) {
   margin-bottom: 1rem;
 }
 
+.title-qw {
+  font-family: 'Roboto', sans-serif;
+  font-size: 2rem; /* Adjust the size as needed */
+  text-transform: uppercase;
+  color: #00412e; /* Aesthetic green color */
+  text-align: center;
+  margin: 0;
+  padding: 10px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Add a subtle shadow for depth */
+}
+
 .ribbon-text {
   margin: 0;
   font-size: 1.25rem;
@@ -457,7 +478,7 @@ function showJobDetails(job) {
 /* Sidebar Styles */
 .sidebar {
   width: 350px;
-  background-color: #e1eebc;
+  background-color: #ffffff;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -474,7 +495,7 @@ function showJobDetails(job) {
 
 .toggle-btn {
   position: absolute;
-  top: 330px;
+  top: 350px;
   right: 10px; /* Adjusted to keep the button fully inside the sidebar */
   background-color: #00796b;
   color: white;
@@ -493,6 +514,31 @@ function showJobDetails(job) {
 .toggle-btn:hover {
   transform: scale(1.1);
 }
+
+.profile-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.profile-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.profile-role {
+  font-size: 14px;
+  color: #757575;
+  margin: 0;
+}
+
 .navigation-menu ul {
   list-style: none;
   padding: 0;
@@ -507,7 +553,7 @@ function showJobDetails(job) {
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: #333;
+  color: #000000;
   font-size: 16px;
   font-weight: 500;
   padding: 10px;
@@ -516,7 +562,7 @@ function showJobDetails(job) {
 }
 
 .navigation-menu a:hover {
-  background-color: #fff;
+  background-color: #00796b;
 }
 
 .icon {
@@ -609,13 +655,5 @@ function showJobDetails(job) {
 .zoom-hover:hover {
   transform: scale(1.02);
   z-index: 1;
-}
-.notification-item {
-  transition: background-color 0.2s ease;
-  border-radius: 10px;
-}
-
-.notification-item:hover {
-  background-color: #f0f0f0;
 }
 </style>

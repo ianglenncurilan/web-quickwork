@@ -1,96 +1,231 @@
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue';
-import { ref, onMounted, computed } from 'vue';
+import AppLayout from '@/components/layout/AppLayout.vue'
+import { ref, onMounted, watch, computed } from 'vue'
 
 // Constants
-const STORAGE_KEY = 'huntjobs-job-listings';
+const STORAGE_KEY = 'huntjobs-job-listings'
+
+// Form state
+const jobForm = ref({
+  title: '',
+  company: '',
+  imageUrl: '',
+  description: '',
+  type: '',
+  rate: '',
+  link: '',
+})
 
 // Job list
-const jobs = ref([]);
+const jobs = ref([])
 
-// Search query
-const searchQuery = ref('');
+// Edit mode
+const isEditing = ref(false)
+const editingJobId = ref(null)
+const isFormVisible = ref(false) // Track form visibility
+const selectedJob = ref(null)
+const searchQuery = ref('')
 
-// Sidebar collapsed state
-const isSidebarCollapsed = ref(false);
+// Sidebar collapse state
+const isSidebarCollapsed = ref(false)
 
-// Function to toggle the sidebar
+// Function to toggle sidebar collapse
 function toggleSidebar() {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value;
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
+
+// Function to open the job post form
+function openJobPostForm() {
+  isFormVisible.value = true // Show the job form
+}
+
+// Function to close the job post form
+function closeJobPostForm() {
+  isFormVisible.value = false // Hide the job form
 }
 
 // Load jobs from localStorage
 function loadJobsFromStorage() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const parsed = stored ? JSON.parse(stored) : [];
-    jobs.value = Array.isArray(parsed) ? parsed : [];
+    const stored = localStorage.getItem(STORAGE_KEY)
+    const parsed = stored ? JSON.parse(stored) : []
+    jobs.value = Array.isArray(parsed) ? parsed : []
   } catch (err) {
-    console.error('Failed to load jobs from localStorage:', err);
-    jobs.value = [];
+    console.error('Failed to load jobs from localStorage:', err)
+    jobs.value = []
+  }
+}
+
+onMounted(() => {
+  loadJobsFromStorage()
+})
+
+// Watch jobs and update localStorage
+watch(
+  jobs,
+  (newVal) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
+  },
+  { deep: true },
+)
+
+// Upload image
+function handleImageUpload(event) {
+  const file = event.target?.files?.[0] || event
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      jobForm.value.imageUrl = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// Post or update job
+function postJob() {
+  // Validate form fields
+  if (
+    !jobForm.value.title.trim() ||
+    !jobForm.value.description.trim() ||
+    !jobForm.value.type.trim() ||
+    !jobForm.value.rate.trim() ||
+    !jobForm.value.link.trim() ||
+    !jobForm.value.imageUrl
+  ) {
+    alert('Please complete all fields.')
+    return
   }
 
+  if (isEditing.value && editingJobId.value !== null) {
+    // Update existing job
+    const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
+    if (index !== -1) {
+      jobs.value[index] = {
+        ...jobs.value[index],
+        ...jobForm.value,
+      }
+    }
+    isEditing.value = false // Exit editing mode
+    editingJobId.value = null // Clear the editing job ID
+  } else {
+    // Add new job
+    const newJob = {
+      id: Date.now(),
+      ...jobForm.value,
+    }
+    jobs.value.unshift(newJob)
+  }
 
+  // Reset form
+  jobForm.value = {
+    title: '',
+    company: '',
+    imageUrl: '',
+    description: '',
+    type: '',
+    rate: '',
+    link: '',
+  }
+
+  closeJobPostForm() // Close the job form
+}
+
+// Delete job
+function deleteJob(id) {
+  if (confirm('Are you sure you want to delete this job?')) {
+    jobs.value = jobs.value.filter((job) => job.id !== id)
+  }
+}
+
+// Edit job
+function editJob(job) {
+  jobForm.value = { ...job } // Populate the form with the selected job's data
+  editingJobId.value = job.id // Set the ID of the job being edited
+  isEditing.value = true // Enable editing mode
+  isFormVisible.value = true // Show the job form
+}
+
+// Show job details
+function showJobDetails(job) {
+  selectedJob.value = job
 }
 
 // Filtered jobs based on search
 const filteredJobs = computed(() => {
-  const query = searchQuery.value.toLowerCase();
+  const searchText = searchQuery.value.toLowerCase()
   return jobs.value.filter((job) =>
     [job.title, job.company, job.description].some((field) =>
-      field.toLowerCase().includes(query)
-    )
-  );
-});
-
-// Load jobs when the component is mounted
-onMounted(() => {
-  loadJobsFromStorage();
-});
+      field.toLowerCase().includes(searchText),
+    ),
+  )
+})
 </script>
 
 <template>
   <AppLayout>
     <template #content>
-      <v-container fluid>
+      <v-container fluid class="page-background">
         <v-row class="fill-screen" dense>
           <!-- Left Column: Navigation -->
-          <v-col
-            :cols="isSidebarCollapsed ? 1 : 3"
-            class="left-column my-5"
-          >
+          <v-col cols="3" class="left-column my-5">
             <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
+              <div class="profile-section">
+                <v-avatar :size="isSidebarCollapsed ? 50 : 80" class="mb-2">
+                  <v-img src="/images/profile.jpg" alt="Profile Picture" />
+                </v-avatar>
+
+                <!-- Hide name and role when collapsed -->
+                <transition name="fade">
+                  <div v-if="!isSidebarCollapsed">
+                    <p class="profile-name">Jasmin</p>
+                    <p class="profile-role">Business Owner</p>
+                  </div>
+                </transition>
+              </div>
               <!-- Arrow Button -->
               <button class="toggle-btn" @click="toggleSidebar">
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
               </button>
 
-
-
               <!-- Navigation Menu -->
               <nav class="navigation-menu">
+                <h1 class="mx-3 my-3 title-qw">Quickwork</h1>
                 <ul>
                   <li>
                     <a href="#" @click="openJobPostForm">
-                      <i class="icon mdi mdi-magnify"></i>
-                      <span v-if="!isSidebarCollapsed">Find Job</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="/home">
                       <i class="icon mdi mdi-bell-outline"></i>
                       <span v-if="!isSidebarCollapsed">Notification</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#">
-                      <i class="icon mdi mdi-star-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Reviews</span>
+                    <a href="#" @click="openJobPostForm">
+                      <i class="icon mdi mdi-plus-circle-outline"></i>
+                      <span v-if="!isSidebarCollapsed">Add Job</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#"
+                      @click="
+                        () => {
+                          isFormVisible = false
+                        }
+                      "
+                    >
+                      <i class="icon mdi mdi-briefcase-outline"></i>
+                      <span v-if="!isSidebarCollapsed">Job Posted</span>
                     </a>
                   </li>
                   <li>
                     <a href="/">
-                      <i class="icon mdi mdi-logout" style="color: red;"></i>
+                      <i class="icon mdi mdi-star-outline"></i>
+                      <span v-if="!isSidebarCollapsed">Review</span>
+                    </a>
+                  </li>
+
+                  <li>
+                    <a href="/">
+                      <i class="icon mdi mdi-logout" style="color: red"></i>
                       <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
                     </a>
                   </li>
@@ -99,11 +234,8 @@ onMounted(() => {
             </aside>
           </v-col>
 
-          <!-- Middle Column: Search + Jobs -->
-          <v-col
-            :cols="isSidebarCollapsed ? 11 : 9"
-            class="scrollable-column middle-column"
-          >
+          <!-- Middle Column: Search + Jobs + Form -->
+          <v-col cols="6" class="scrollable-column">
             <div class="search-container">
               <div class="search-box">
                 <input
@@ -118,6 +250,79 @@ onMounted(() => {
               </div>
             </div>
 
+
+            <!-- Job Form (Middle) -->
+            <v-card v-if="isFormVisible" class="pa-4 mb-6 rounded-xl" elevation="1" flat>
+              <div class="ribbon-container">
+                <h4 class="ribbon-text">Add a Job</h4>
+              </div>
+              <v-btn class="close-btn margin-left" elevation="2" @click="closeJobPostForm">
+                <v-icon color="white">mdi-close</v-icon>
+              </v-btn>
+              <v-divider class="my-4"></v-divider>
+
+              <v-text-field
+                v-model="jobForm.title"
+                clearable
+                label="Job Name"
+                variant="solo-filled"
+                class="mb-4"
+                required
+              />
+              <v-textarea
+                v-model="jobForm.description"
+                clearable
+                label="Job Description"
+                variant="solo-filled"
+                auto-grow
+                rows="3"
+                class="mb-4"
+                required
+              />
+              <v-text-field
+                v-model="jobForm.type"
+                clearable
+                label="Job Type"
+                variant="solo-filled"
+                class="mb-4"
+                required
+              />
+              <v-text-field
+                v-model="jobForm.rate"
+                clearable
+                label="Monthly rate"
+                variant="solo-filled"
+                class="mb-4"
+                required
+              />
+              <v-text-field
+                v-model="jobForm.link"
+                clearable
+                label="Job link"
+                variant="solo-filled"
+                class="mb-6"
+                required
+              />
+              <v-file-input
+                label="Upload Job Image"
+                variant="solo-filled"
+                class="mb-4"
+                @change="handleImageUpload"
+                accept="image/*"
+                prepend-icon="mdi-camera"
+              />
+
+              <v-btn
+                color="teal-darken-2"
+                class="rounded-pill px-6 py-3 text-white text-capitalize"
+                elevation="2"
+                block
+                @click="postJob"
+              >
+                Submit Job
+              </v-btn>
+            </v-card>
+
             <!-- Job Listings -->
             <v-container fluid>
               <v-row dense>
@@ -125,34 +330,63 @@ onMounted(() => {
                   v-for="job in filteredJobs"
                   :key="job.id"
                   cols="12"
-                  sm="6"
-                  md="4"
                   class="d-flex"
+                  @click="showJobDetails(job)"
                 >
-                  <v-card
-                    class="mx-auto my-4"
-                    max-width="374"
-                  >
-                    <v-img
-                      height="200px"
-                      :src="job.imageUrl"
-                      cover
-                    ></v-img>
-
-                    <v-card-title>{{ job.title }}</v-card-title>
-
-                    <v-card-subtitle>{{ job.company }}</v-card-subtitle>
-
-                    <v-card-text>
-                      <p><strong>Description:</strong> {{ job.description }}</p>
-                      <p><strong>Type:</strong> {{ job.type }}</p>
-                      <p><strong>Rate:</strong> {{ job.rate }}</p>
-                      <p><strong>Link:</strong> <a :href="job.link" target="_blank">{{ job.link }}</a></p>
-                    </v-card-text>
+                  <v-card class="pa-5 rounded-xl w-100 zoom-hover" col="12" md="7" elevation="3">
+                    <v-row no-gutters align="center">
+                      <v-col cols="auto">
+                        <v-img
+                          :src="job.imageUrl"
+                          class="rounded-lg"
+                          width="80"
+                          height="80"
+                          cover
+                        />
+                      </v-col>
+                      <v-col class="pl-4">
+                        <h4
+                          class="mb-1 font-weight-medium"
+                          @click.stop="handleJobTitleClick(job.id)"
+                        >
+                          {{ job.title }}
+                        </h4>
+                        <p class="text-body-2 mb-1 text-grey-darken-1">{{ job.company }}</p>
+                        <p class="text-caption text-grey">{{ job.description }}</p>
+                      </v-col>
+                      <v-col cols="auto" class="d-flex align-center">
+                        <v-btn class="mx-2" icon @click.stop="editJob(job)">
+                          <v-icon>mdi-pencil-outline</v-icon>
+                        </v-btn>
+                        <v-btn icon @click.stop="deleteJob(job.id)">
+                          <v-icon color="red">mdi-delete-outline</v-icon>
+                        </v-btn>
+                      </v-col>
+                    </v-row>
                   </v-card>
                 </v-col>
               </v-row>
             </v-container>
+          </v-col>
+
+          <!-- Right Column: Job Details -->
+          <v-col cols="3" class="">
+            <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
+              <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
+              <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
+              <p class="text-body-2 mb-2 text-grey-darken-1">
+                Job description: {{ selectedJob.description }}
+              </p>
+              <p class="text-caption text-grey mb-2">Job Type: {{ selectedJob.type }}</p>
+              <p class="text-caption text-grey-darken-1">Monthly rate: {{ selectedJob.rate }}</p>
+              <p class="text-caption text-grey-darken-1">Job link: {{ selectedJob.link }}</p>
+            </v-card>
+
+            <!-- Message when no job is selected -->
+            <v-card v-else class="pa-6 rounded-xl d-flex align-center justify-center" elevation="5">
+              <v-icon size="36" color="grey">mdi-cursor-pointer</v-icon>
+              <p class="ml-2 text-grey-darken-1">Select a job to view details</p>
+            </v-card>
           </v-col>
         </v-row>
       </v-container>
@@ -161,39 +395,97 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.left-card {
+  transition: transform 0.3s ease;
+}
+
+.left-card:hover {
+  transform: scale(1.02);
+  z-index: 1;
+}
+
 .fill-screen {
   height: 100vh;
-  overflow: hidden;
 }
 
 .scrollable-column {
   max-height: 100vh;
   overflow-y: auto;
   padding-right: 12px;
-  transition: margin-left 0.3s ease; /* Smooth transition for position */
 }
 
-.middle-column {
-  background-color: #F2E7C4; /* Light gray background color */
-  padding: 20px; /* Optional padding for better spacing */
+.close-btn {
+  width: 28px; /* Smaller width */
+  height: 28px; /* Smaller height */
+  border-radius: 4px; /* Keeps the button square */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #328e6e; /* Same as teal-darken-2 */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
-.sticky-card {
-  position: sticky;
-  top: 0;
+.close-btn:hover {
+  background-color: #328e6e; /* Slightly lighter teal on hover */
+  transform: scale(1.1); /* Slight zoom effect on hover */
+}
+
+.close-btn:active {
+  transform: scale(0.95); /* Slight shrink effect on click */
+}
+
+.margin-left {
+  margin-right: 15px; /* Adjust the value as needed */
+}
+
+.custom-green-bg {
+  background-color: #90c67c; /* Replace with your desired color */
+  border: 1px solid #90c67c; /* Optional: Add a border for better visibility */
+  border-radius: 8px; /* Keep the rounded corners */
+  padding: 16px; /* Adjust padding if needed */
+}
+
+.ribbon-container {
+  position: relative;
+  background-color: #328e6e;
+  color: white;
+  padding: 0.5rem 2rem;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 5px 5px 0 0; /* Rounded top corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
+  margin-bottom: 1rem;
+}
+
+.title-qw {
+  font-family: 'Roboto', sans-serif;
+  font-size: 2rem; /* Adjust the size as needed */
+  text-transform: uppercase;
+  color: #00412e; /* Aesthetic green color */
+  text-align: center;
+  margin: 0;
+  padding: 10px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Add a subtle shadow for depth */
+}
+
+.ribbon-text {
+  margin: 0;
+  font-size: 1.25rem;
 }
 
 /* Sidebar Styles */
 .sidebar {
   width: 350px;
-  background-color: #F2E7C4;
+  background-color: #ffffff;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   position: fixed;
-  height: 200vh;
+  height: 100vh;
   overflow-y: auto;
-  transition: width 0.3s ease; /* Smooth transition for width */
+  transition: width 0.3s ease;
 }
 
 .sidebar.collapsed {
@@ -201,10 +493,9 @@ onMounted(() => {
   padding: 10px;
 }
 
-/* Toggle Button */
 .toggle-btn {
   position: absolute;
-  top: 300px;
+  top: 350px;
   right: 10px; /* Adjusted to keep the button fully inside the sidebar */
   background-color: #00796b;
   color: white;
@@ -217,7 +508,7 @@ onMounted(() => {
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease; /* Smooth transition for hover effect */
+  transition: transform 0.3s ease;
 }
 
 .toggle-btn:hover {
@@ -262,7 +553,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: #333;
+  color: #000000;
   font-size: 16px;
   font-weight: 500;
   padding: 10px;
@@ -271,7 +562,7 @@ onMounted(() => {
 }
 
 .navigation-menu a:hover {
-  background-color: #fff;
+  background-color: #00796b;
 }
 
 .icon {
@@ -318,6 +609,7 @@ onMounted(() => {
   font-size: 16px;
   padding: 10px;
 }
+
 /* Search Button */
 .search-button {
   background-color: #00796b;
@@ -330,13 +622,38 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
+
 .search-button:hover {
   background-color: #005a4c;
   transform: scale(1.1);
 }
+
 .search-button:active {
   transform: scale(0.95);
+}
+
+.job-card-hover {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.job-card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.zoom-hover {
+  transition: transform 0.3s ease;
+}
+
+.zoom-hover:hover {
+  transform: scale(1.02);
+  z-index: 1;
 }
 </style>

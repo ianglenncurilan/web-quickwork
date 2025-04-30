@@ -145,23 +145,20 @@ function handleLogin() {
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
 
-                <!-- Dropdown for selecting role -->
-                <div class="dropdown-container">
-                  <label for="role-select" class="dropdown-label">Select Role</label>
-                  <div class="custom-dropdown">
-                    <select id="role-select" v-model="selectedRole" class="dropdown-select">
-                      <option value="" disabled>Select Role</option>
-                      <option v-for="role in roles" :key="role" :value="role">
-                        {{ role }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
+                <v-select
+                class="dropdown-label mt-3"
+                  v-model="selectedRole"
+                  :items="roles"
+                  label="Select Role"
+                  :rules="[requiredValidator]"
+                  outlined
+                  required
+
+                >
+                </v-select>
 
                 <div class="d-flex justify-center">
-                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit"
-                    >LOGIN</v-btn
-                  >
+                  <v-btn class="mt-3 btn-fixed-width" color="#00412E" type="submit">LOGIN</v-btn>
                 </div>
                 <div class="text-center mt-2">
                   <Router-link to="/forgot-password" class="forgot-password-link">
@@ -218,7 +215,7 @@ function handleLogin() {
 
 .new-here-section .v-btn:hover {
   background-color: white;
-  color: #328e6e;
+  color: #00412e;
 }
 
 .ribbon-container {
@@ -269,5 +266,64 @@ function handleLogin() {
 .forgot-password-link:hover {
   color: #007bff; /* Change color on hover */
   text-decoration: underline;
+}
+
+/* Dropdown Container */
+.dropdown-container {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Dropdown Label */
+.dropdown-label {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Custom Dropdown */
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Dropdown Select */
+.dropdown-select {
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  appearance: none; /* Remove default dropdown arrow */
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Dropdown Select Hover/Focus */
+.dropdown-select:hover,
+.dropdown-select:focus {
+  border-color: #00796b;
+  box-shadow: 0 0 5px rgba(0, 121, 107, 0.5);
+}
+
+/* Add a custom arrow */
+.custom-dropdown::after {
+  content: '▼';
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: #333;
+  pointer-events: none;
 }
 </style>

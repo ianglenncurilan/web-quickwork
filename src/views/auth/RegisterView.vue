@@ -34,6 +34,7 @@ const formAction = ref({
   ...formActionDefault,
 })
 
+const refVform = ref(null) // Define the form reference
 
 // Handle form submission
 const handleRegister = async () => {
@@ -93,35 +94,9 @@ const handleRegister = async () => {
 <template>
   <AppLayout>
     <template #content>
-      <v-alert
-      v-if="formAction.formSuccessMessage"
-      :text="formAction.formSuccessMessage"
-      title="Success!"
-      type="success"
-      variant="tonal"
-      density="compact"
-      border="start"
-      closable
-      >
-      </v-alert>
-      <v-alert
-      v-if="formAction.formErrorMessage"
-      :text="formAction.formErrorMessage"
-      title="Error!"
-      type="error"
-      variant="tonal"
-      density="compact"
-      border="start"
-      closable
-      >
-      </v-alert>
-      <v-container
-        class="d-flex align-center justify-center"
-        style="min-height: 80vh"
-      >
+      <v-container class="d-flex align-center justify-center" style="min-height: 80vh">
         <v-card class="rounded-lg overflow-hidden" elevation="10" max-width="900">
           <v-row no-gutters>
-
             <!-- Left Section - Sign Up Prompt -->
             <v-col
 
@@ -138,8 +113,11 @@ const handleRegister = async () => {
               />
 
               <h3 class="font-weight-bold text-center">Already Signed up?</h3>
-              <p class="text-center">Log in to your account so you can continue building and editing your onboarding flows.</p>
-              <v-btn color="white" outlined class="mt-2" to="/">LOGIN</v-btn>
+              <p class="text-center">
+                Log in to your account so you can continue building and editing your onboarding
+                flows.
+              </p>
+              <v-btn color="white" outlined class="mt-2" to="/login">LOGIN</v-btn>
             </v-col>
 
             <!-- Right Section - Register Form -->
@@ -206,12 +184,6 @@ const handleRegister = async () => {
                   :append-inner-icon="showPasswordConfirmation ? 'mdi-eye' : 'mdi-eye-off'"
                   @click:append-inner="togglePasswordVisibility('passwordConfirmation')"
                 ></v-text-field>
-
-                <v-checkbox
-                  label="I Accept Terms & Conditions"
-                  required
-                  class="terms-checkbox"
-                ></v-checkbox>
 
                 <div class="d-flex justify-center">
                   <v-btn
