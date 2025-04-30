@@ -1,12 +1,24 @@
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue';
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue'
+import AppLayout from '@/components/layout/AppLayout.vue'
+import { computed } from 'vue'
+
+const filteredJobs = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return jobs.value
+  return jobs.value.filter(
+    (job) =>
+      job.title.toLowerCase().includes(query) ||
+      job.description.toLowerCase().includes(query) ||
+      job.company?.toLowerCase().includes(query),
+  )
+})
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings'
 
 // States
-const jobs = ref([]);
+const jobs = ref([])
 const jobForm = ref({
   title: '',
   company: '',
@@ -15,22 +27,35 @@ const jobForm = ref({
   type: '',
   rate: '',
   link: '',
-});
+})
+const isEditing = ref(false)
+const editingJobId = ref(null)
+const isFormVisible = ref(false)
+const selectedJob = ref(null)
+const searchQuery = ref('')
+const isSidebarCollapsed = ref(false)
+const isNotificationVisible = ref(false)
 
-// Job list
-const jobs = ref([]);
+// Notifications
+const notificationMessages = ref([])
 
-// Edit mode
-const isEditing = ref(false);
-const editingJobId = ref(null);
-const isFormVisible = ref(false); // Track form visibility
-const selectedJob = ref(null);
-const searchQuery = ref('');
+// Lifecycle Hook
+onMounted(() => {
+  loadJobsFromStorage()
+})
 
-// Sidebar collapse state
-const isSidebarCollapsed = ref(false);
+// Watchers
+watch(
+  jobs,
+  (newVal) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
+  },
+  { deep: true },
+)
 
-// Function to toggle sidebar collapse
+// =============================
+// Sidebar
+// =============================
 function toggleSidebar() {
   isSidebarCollapsed.value = !isSidebarCollapsed.value
 }
@@ -39,48 +64,27 @@ function toggleSidebar() {
 // Notifications
 // =============================
 function toggleNotification() {
-  isNotificationVisible.value = !isNotificationVisible.value;
-  isFormVisible.value = false;
-  selectedJob.value = null;
+  isNotificationVisible.value = !isNotificationVisible.value
+  isFormVisible.value = false
+  selectedJob.value = null
 }
 
-// =============================
 // Job Form
-// =============================
 function openJobPostForm() {
-  isFormVisible.value = true; // Show the job form
+  isNotificationVisible.value = false
+  selectedJob.value = null
+  isFormVisible.value = true
 }
 
 function closeJobPostForm() {
-  isFormVisible.value = false; // Hide the job form
+  isFormVisible.value = false
 }
-
-// Load jobs from localStorage
-function loadJobsFromStorage() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const parsed = stored ? JSON.parse(stored) : [];
-    jobs.value = Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('Failed to load jobs from localStorage:', err);
-    jobs.value = [];
-  }
+function showPostedJobs() {
+  isFormVisible.value = false // optional: close the form if open
+  isNotificationVisible.value = false
+  selectedJob.value = null
+  // Pwede pud nimo i-toggle or i-set ang filter state diri
 }
-
-onMounted(() => {
-  loadJobsFromStorage();
-});
-
-// Watch jobs and update localStorage
-watch(
-  jobs,
-  (newVal) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-  },
-  { deep: true },
-);
-
-// Upload image
 function handleImageUpload(event) {
   const file = event.target?.files?.[0] || event
   if (file) {
@@ -93,41 +97,33 @@ function handleImageUpload(event) {
 }
 
 function postJob() {
-  // Validate form fields
+  const form = jobForm.value
   if (
-    !jobForm.value.title.trim() ||
-    !jobForm.value.description.trim() ||
-    !jobForm.value.type.trim() ||
-    !jobForm.value.rate.trim() ||
-    !jobForm.value.link.trim() ||
-    !jobForm.value.imageUrl
+    !form.title.trim() ||
+    !form.description.trim() ||
+    !form.type.trim() ||
+    !form.rate.trim() ||
+    !form.link.trim() ||
+    !form.imageUrl
   ) {
-    alert('Please complete all fields.');
-    return;
+    alert('Please complete all fields.')
+    return
   }
 
   if (isEditing.value && editingJobId.value !== null) {
-    // Update existing job
-    const index = jobs.value.findIndex((job) => job.id === editingJobId.value);
+    const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
     if (index !== -1) {
-      jobs.value[index] = {
-        ...jobs.value[index],
-        ...jobForm.value,
-      };
+      jobs.value[index] = { ...jobs.value[index], ...form }
     }
     isEditing.value = false
     editingJobId.value = null
   } else {
-    // Add new job
-    const newJob = {
-      id: Date.now(),
-      ...jobForm.value,
-    };
-    jobs.value.unshift(newJob);
+    const newJob = { id: Date.now(), ...form }
+    jobs.value.unshift(newJob)
   }
 
-  resetForm();
-  closeJobPostForm();
+  resetForm()
+  closeJobPostForm()
 }
 
 function resetForm() {
@@ -139,15 +135,23 @@ function resetForm() {
     type: '',
     rate: '',
     link: '',
-  };
-
-  closeJobPostForm();
+  }
 }
 
-// Delete job
+// Job Management
+function loadJobsFromStorage() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    jobs.value = stored ? JSON.parse(stored) : []
+  } catch (err) {
+    console.error('Failed to load jobs:', err)
+    jobs.value = []
+  }
+}
+
 function deleteJob(id) {
   if (confirm('Are you sure you want to delete this job?')) {
-    jobs.value = jobs.value.filter((job) => job.id !== id);
+    jobs.value = jobs.value.filter((job) => job.id !== id)
   }
 }
 
@@ -161,18 +165,7 @@ function editJob(job) {
 function showJobDetails(job) {
   selectedJob.value = job
 }
-
-// Filtered jobs based on search
-const filteredJobs = computed(() => {
-  const searchText = searchQuery.value.toLowerCase();
-  return jobs.value.filter((job) =>
-    [job.title, job.company, job.description].some((field) =>
-      field.toLowerCase().includes(searchText),
-    ),
-  );
-});
 </script>
-
 
 <template>
   <AppLayout>
@@ -182,19 +175,6 @@ const filteredJobs = computed(() => {
           <!-- Left Column: Navigation -->
           <v-col cols="3" class="left-column my-5">
             <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
-              <div class="profile-section">
-                <v-avatar :size="isSidebarCollapsed ? 50 : 80" class="mb-2">
-                  <v-img src="/images/profile.jpg" alt="Profile Picture" />
-                </v-avatar>
-
-               <!-- Hide name and role when collapsed -->
-                <transition name="fade">
-                   <div v-if="!isSidebarCollapsed">
-                      <p class="profile-name">Jasmin</p>
-                      <p class="profile-role">Business Owner</p>
-                   </div>
-                 </transition>
-             </div>
               <!-- Arrow Button -->
               <button class="toggle-btn" @click="toggleSidebar">
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
@@ -202,12 +182,13 @@ const filteredJobs = computed(() => {
 
               <!-- Navigation Menu -->
               <nav class="navigation-menu">
-                <h1 class="mx-3 my-3 title-qw">Quickwork</h1>
                 <ul>
-                  <li><a href="#" @click.prevent="toggleNotification">
-  <i class="icon mdi mdi-bell-outline"></i>
-  <span v-if="!isSidebarCollapsed">Notification</span>
-</a></li>
+                  <li>
+                    <a href="#" @click.prevent="toggleNotification">
+                      <i class="icon mdi mdi-bell-outline"></i>
+                      <span v-if="!isSidebarCollapsed">Notification</span>
+                    </a>
+                  </li>
 
                   <li>
                     <a href="#" @click="openJobPostForm">
@@ -216,13 +197,13 @@ const filteredJobs = computed(() => {
                     </a>
                   </li>
                   <li>
-                    <a href="#" @click="() => { isFormVisible = false }">
+                    <a href="#" @click="showPostedJobs">
                       <i class="icon mdi mdi-briefcase-outline"></i>
                       <span v-if="!isSidebarCollapsed">Job Posted</span>
                     </a>
                   </li>
                   <li>
-                    <a href="/">
+                    <a href="#" @click="">
                       <i class="icon mdi mdi-star-outline"></i>
                       <span v-if="!isSidebarCollapsed">Review</span>
                     </a>
@@ -255,42 +236,51 @@ const filteredJobs = computed(() => {
               </div>
             </div>
 
-            <v-card v-if="isNotificationVisible" class="pa-4 mb-4 rounded-xl" elevation="2">
-  <div class="d-flex justify-space-between align-center mb-4">
-    <div class="d-flex align-center">
-      <v-icon class="mr-2" color="primary">mdi-bell-outline</v-icon>
-      <h4 class="mb-0">Notifications</h4>
-    </div>
-    <v-btn icon @click="isNotificationVisible = false">
-      <v-icon>mdi-close</v-icon>
-    </v-btn>
-  </div>
+            <v-card
+              v-if="isNotificationVisible"
+              class="pa-4 mb-4"
+              elevation="2"
+              style="height: 400px"
+            >
+              <div class="d-flex justify-space-between align-center mb-4">
+                <div class="d-flex align-center">
+                  <v-icon class="mr-2" color="secondary">mdi-bell-outline</v-icon>
+                  <h4 class="mb-0">Notifications</h4>
+                </div>
+                <v-btn
+                  @click="isNotificationVisible = false"
+                  color="green"
+                  class="text-white font-weight-bold px-4 py-2"
+                  elevation="2"
+                  variant="flat"
+                >
+                  <v-icon left>mdi-close</v-icon>
+                  Close
+                </v-btn>
+              </div>
 
-  <v-divider class="mb-4"></v-divider>
+              <v-divider class="mb-4"></v-divider>
 
-  <v-list dense nav>
-    <v-list-item
-      v-for="message in notificationMessages"
-      :key="message.id"
-      class="notification-item"
-    >
-      <v-list-item-avatar>
-        <v-icon color="deep-purple">mdi-bell-ring</v-icon>
-      </v-list-item-avatar>
+              <v-list dense nav>
+                <v-list-item
+                  v-for="message in notificationMessages"
+                  :key="message.id"
+                  class="notification-item"
+                >
+                  <v-list-item-avatar>
+                    <v-icon color="deep-purple">mdi-bell-ring</v-icon>
+                  </v-list-item-avatar>
 
-      <v-list-item-content>
-        <v-list-item-title class="font-weight-bold">
-          {{ message.text }}
-        </v-list-item-title>
-      </v-list-item-content>
-    </v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title class="font-weight-bold">
+                      {{ message.text }}
+                    </v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
 
-    <v-divider v-if="notificationMessages.length" class="my-2" />
-  </v-list>
-</v-card>
-
-
-
+                <v-divider v-if="notificationMessages.length" class="my-2" />
+              </v-list>
+            </v-card>
 
             <!-- Job Form (Middle) -->
             <v-card v-if="isFormVisible" class="pa-4 mb-6 rounded-xl" elevation="1" flat>
@@ -374,7 +364,7 @@ const filteredJobs = computed(() => {
                   class="d-flex"
                   @click="showJobDetails(job)"
                 >
-                  <v-card class="pa-5 rounded-xl w-100 zoom-hover" col="12" md="7" elevation="3">
+                  <v-card class="pa-5 w-100" col="12" md="7" elevation="3">
                     <v-row no-gutters align="center">
                       <v-col cols="auto">
                         <v-img
@@ -412,7 +402,7 @@ const filteredJobs = computed(() => {
 
           <!-- Right Column: Job Details -->
           <v-col cols="3" class="left-card">
-            <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
+            <v-card v-if="selectedJob" class="pa-6" elevation="5">
               <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
               <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
               <p class="text-body-2 mb-2 text-grey-darken-1">
@@ -430,7 +420,6 @@ const filteredJobs = computed(() => {
 </template>
 
 <style scoped>
-
 .left-card {
   transition: transform 0.3s ease;
 }
@@ -495,17 +484,6 @@ const filteredJobs = computed(() => {
   margin-bottom: 1rem;
 }
 
-.title-qw {
-  font-family: 'Roboto', sans-serif;
-  font-size: 2rem; /* Adjust the size as needed */
-  text-transform: uppercase;
-  color: #00412e; /* Aesthetic green color */
-  text-align: center;
-  margin: 0;
-  padding: 10px 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Add a subtle shadow for depth */
-}
-
 .ribbon-text {
   margin: 0;
   font-size: 1.25rem;
@@ -514,7 +492,7 @@ const filteredJobs = computed(() => {
 /* Sidebar Styles */
 .sidebar {
   width: 350px;
-  background-color: #e1eebc;
+  background-color: #90c67c;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -564,7 +542,7 @@ const filteredJobs = computed(() => {
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: #000000;
+  color: #333;
   font-size: 16px;
   font-weight: 500;
   padding: 10px;
@@ -675,5 +653,4 @@ const filteredJobs = computed(() => {
 .notification-item:hover {
   background-color: #f0f0f0;
 }
-
 </style>

@@ -6,6 +6,7 @@ import PostView from '@/views/PostView.vue';
 import StudentView from '@/views/StudentView.vue';
 
 
+
 const routes = [
   {
     path: '/',
@@ -27,6 +28,7 @@ const routes = [
     name: 'post',
     component: PostView,
   },
+ 
   {
     path: '/student',
     name: 'student',
