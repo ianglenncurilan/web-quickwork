@@ -3,9 +3,7 @@ import { ref } from 'vue'
 
 const theme = ref('light')
 
-function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light'
-}
+
 </script>
 
 <template>
