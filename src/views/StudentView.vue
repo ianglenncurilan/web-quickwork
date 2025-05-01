@@ -320,7 +320,8 @@ function handleReviewSubmitted(reviewData) {
       <v-container fluid class="page-background">
         <v-row class="fill-screen" dense>
           <!-- Left Column: Navigation -->
-          <v-col cols="3" class="left-column my-5">
+          <v-col cols="3" class="left-column my-5" elevation="3">
+            <v-card class="pa-6 rounded-xl" elevation="3" style="height: 600px;">
             <!-- Profile Header -->
             <ProfileHeader />
 
@@ -363,6 +364,7 @@ function handleReviewSubmitted(reviewData) {
                 </li>
               </ul>
             </nav>
+            </v-card>
           </v-col>
 
           <!-- Middle Column: Search + Jobs + Form -->
@@ -502,7 +504,7 @@ function handleReviewSubmitted(reviewData) {
                         <!-- Show Reviews Button -->
                         <v-btn
                           color="purple"
-                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2"
+                          class="rounded-pill px-8 py-0 text-white text-capitalize mb-2"
                           elevation="2"
                           @click.stop="showJobReviews(job)"
                         >
@@ -512,7 +514,7 @@ function handleReviewSubmitted(reviewData) {
                         <!-- Rate It Button -->
                         <v-btn
                           color="blue"
-                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2"
+                          class="rounded-pill px-8 py-0 text-white text-capitalize mb-2"
                           elevation="2"
                           @click.stop="rateJob(job)"
                         >

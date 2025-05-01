@@ -1,13 +1,15 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '@/views/pages/HomeView.vue';
-import LoginView from '@/views/auth/LoginView.vue';
-import RegisterView from '@/views/auth/RegisterView.vue';
-import PostView from '@/views/PostView.vue';
-import StudentView from '@/views/StudentView.vue';
-import AlertNotification from '@/components/layout/commons/AlertNotification.vue';
-import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue';
-import ApplicationView from '@/views/pages/ApplicationView.vue';
-import ReviewView from '@/views/pages/ReviewView.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '@/views/pages/HomeView.vue'
+import LoginView from '@/views/auth/LoginView.vue'
+import RegisterView from '@/views/auth/RegisterView.vue'
+import PostView from '@/views/PostView.vue'
+import StudentView from '@/views/StudentView.vue'
+import AlertNotification from '@/components/layout/commons/AlertNotification.vue'
+import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
+import ApplicationView from '@/views/pages/ApplicationView.vue'
+import ReviewView from '@/views/pages/ReviewView.vue'
+import NotificationComponent from '@/components/layout/commons/NotificationComponent.vue'
+import NotificationManager from '@/components/layout/commons/NotificationManager.vue'
 
 const routes = [
   {
@@ -56,12 +58,21 @@ const routes = [
     name: 'review',
     component: ReviewView,
   },
-
-];
+  {
+    path: '/notification',
+    name: 'notification',
+    component: NotificationComponent,
+  },
+  {
+    path: '/notificationmanager',
+    name: 'notificationmanager',
+    component: NotificationManager,
+  },
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL), // Ensure the base URL is used
   routes,
-});
+})
 
-export default router;
+export default router

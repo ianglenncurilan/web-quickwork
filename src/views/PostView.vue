@@ -3,12 +3,19 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
 import ApplicationView from '@/views/pages/ApplicationView.vue'
 import ReviewView from '@/views/pages/ReviewView.vue'
+import NotificationComponent from '@/components/layout/commons/NotificationComponent.vue'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase'
 import { getAvatarText } from '@/utils/helpers'
 
 const router = useRouter()
+
+const notificationDialog = ref(false) // Controls the visibility of the notification dialog
+
+function openNotificationDialog() {
+  notificationDialog.value = true
+}
 
 const userData = ref({
   initials: '',
@@ -333,10 +340,14 @@ const filteredJobs = computed(() => {
               <nav class="navigation-menu">
                 <ul>
                   <li>
-                    <a href="#" @click="openJobPostForm">
-                      <i class="icon mdi mdi-bell-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Notification</span>
-                    </a>
+                    <v-btn
+                      color="blue"
+                      class="rounded-pill px-6 py-2 text-white text-capitalize"
+                      elevation="2"
+                      @click="openNotificationDialog"
+                    >
+                      Notifications
+                    </v-btn>
                   </li>
                   <li>
                     <a href="#" @click="openJobPostForm">
@@ -672,6 +683,20 @@ const filteredJobs = computed(() => {
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="red" text @click="ratingDialog = false">Close</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Notification Dialog -->
+      <v-dialog v-model="notificationDialog" max-width="800px">
+        <v-card>
+          <v-card-title class="headline text-center pt-5">Notifications</v-card-title>
+          <v-card-text>
+            <NotificationComponent />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="red" text @click="notificationDialog = false">Close</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

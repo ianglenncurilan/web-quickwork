@@ -41,11 +41,11 @@ onMounted(() => {
   <v-container style="height: auto" fluid>
     <v-row justify="center">
       <div class="mx-auto text-center">
-        <v-avatar color="green" size="large" class="mb-2">
+        <v-avatar color="green" size="large" class=" mt-5">
           <span class="text-h5">{{ userData.initials }}</span>
         </v-avatar>
         <h3>{{ userData.fullname }}</h3>
-        <p class="text-caption mt-1">
+        <p class="text-caption mt-1 my-5">
           {{ userData.email }}
         </p>
       </div>

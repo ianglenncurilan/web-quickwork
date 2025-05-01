@@ -1,13 +1,15 @@
 <script setup>
 import { ref, reactive } from 'vue'
-import { defineProps } from 'vue'
+import { defineProps, defineEmits } from 'vue'
 
-defineProps({
+const props = defineProps({
   jobId: {
     type: String,
     required: true,
   },
 })
+
+const emit = defineEmits(['application-submitted'])
 
 // Form state management
 const formState = reactive({
@@ -135,6 +137,18 @@ const validateStep = (step) => {
   return isValid
 }
 
+// Get jobs from localStorage to find the current job
+const getJobById = (jobId) => {
+  try {
+    const storedJobs = localStorage.getItem('huntjobs-job-listings')
+    const jobs = storedJobs ? JSON.parse(storedJobs) : []
+    return jobs.find(job => job.id.toString() === jobId.toString())
+  } catch (error) {
+    console.error('Error finding job:', error)
+    return null
+  }
+}
+
 // Submit form
 const submitForm = () => {
   const finalValidation = validateStep(formStep.value)
@@ -149,12 +163,52 @@ const submitForm = () => {
   if (finalValidation) {
     isSubmitting.value = true
 
+    // Generate application ID
+    const applicationId = Math.random().toString(36).substring(2, 10).toUpperCase()
+
+    // Get the current job data
+    const jobData = getJobById(props.jobId)
+
+    // Create application data object
+    const applicationData = {
+      id: applicationId,
+      jobId: props.jobId,
+      timestamp: new Date().toISOString(),
+      ...formState
+    }
+
+    // Save application to localStorage
+    saveApplication(applicationData)
+
+    // Emit event to parent for notification
+    emit('application-submitted', {
+      application: applicationData,
+      job: jobData
+    })
+
     // Simulate API call
     setTimeout(() => {
       isSubmitting.value = false
       isSubmitted.value = true
-      console.log('Form submitted:', formState)
+      console.log('Form submitted:', applicationData)
     }, 1500)
+  }
+}
+
+// Save application to localStorage
+const saveApplication = (applicationData) => {
+  try {
+    // Get existing applications
+    const storedApplications = localStorage.getItem('huntjobs-applications')
+    const applications = storedApplications ? JSON.parse(storedApplications) : []
+
+    // Add new application
+    applications.push(applicationData)
+
+    // Save back to localStorage
+    localStorage.setItem('huntjobs-applications', JSON.stringify(applications))
+  } catch (error) {
+    console.error('Error saving application:', error)
   }
 }
 
@@ -473,7 +527,11 @@ const formatPhone = (event) => {
 
           <div class="button-group">
             <button class="btn btn-outline" @click="prevStep">Back</button>
-            <button class="btn btn-primary" @click="submitForm" :disabled="isSubmitting">
+            <button
+              class="btn btn-primary"
+              @click="submitForm"
+              :disabled="isSubmitting"
+            >
               <span v-if="isSubmitting">Submitting...</span>
               <span v-else>Submit Application</span>
             </button>
@@ -481,16 +539,12 @@ const formatPhone = (event) => {
         </div>
       </div>
 
-      <!-- Success Message -->
-      <div v-else class="success-container">
-        <div class="success-icon">✓</div>
-        <h2>Application Submitted!</h2>
-        <p>Thank you for your application, {{ formState.firstName }}.</p>
-        <p>We will review your information and contact you soon.</p>
-        <div class="application-id">
-          <span>Application ID:</span>
-          <span>{{ Math.random().toString(36).substring(2, 10).toUpperCase() }}</span>
+      <div v-else class="form-success">
+        <div class="success-icon">
+          <v-icon size="64" color="success">mdi-check-circle</v-icon>
         </div>
+        <h2>Application Submitted Successfully!</h2>
+        <p>Thank you for your application. We will review your information and get back to you soon.</p>
       </div>
     </div>
   </div>
