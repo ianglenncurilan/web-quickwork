@@ -97,11 +97,6 @@ const displayMode = ref('details') // 'details' or 'reviews'
 // Sidebar collapse state
 const isSidebarCollapsed = ref(false)
 
-// Function to toggle sidebar collapse
-function toggleSidebar() {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
 // Function to open the job post form
 function openJobPostForm() {
   isFormVisible.value = true // Show the job form
@@ -278,6 +273,9 @@ function applyForJob(job) {
 function rateJob(job) {
   selectedJobId.value = job.id // Set the selected job ID
   ratingDialog.value = true // Open the rating modal
+
+  // Add this to make sure we're viewing the job details
+  selectedJob.value = job
 }
 
 // Submit a new review/rating
@@ -297,15 +295,22 @@ function submitReview(jobId, review) {
   // Close the rating dialog
   ratingDialog.value = false
 
-  // Update the selected job to show the reviews
+  // Update the selected job to show the reviews - IMPORTANT FIX HERE
   if (selectedJob.value && selectedJob.value.id === jobId) {
-    showJobReviews(selectedJob.value)
+    // Force the UI to update by explicitly changing display mode to reviews
+    displayMode.value = 'reviews'
   }
+
+  // Save the updated ratings
+  saveRatingsToStorage()
 }
 
 // Method to receive rating data from the ReviewView component
 function handleReviewSubmitted(reviewData) {
-  submitReview(selectedJobId.value, reviewData)
+  // Make sure we have a selected job ID
+  if (selectedJobId.value) {
+    submitReview(selectedJobId.value, reviewData)
+  }
 }
 </script>
 
@@ -316,62 +321,48 @@ function handleReviewSubmitted(reviewData) {
         <v-row class="fill-screen" dense>
           <!-- Left Column: Navigation -->
           <v-col cols="3" class="left-column my-5">
-            <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
-              <!-- Profile Header -->
-              <ProfileHeader :isSidebarCollapsed="isSidebarCollapsed" />
+            <!-- Profile Header -->
+            <ProfileHeader />
 
-              <!-- Arrow Button -->
-              <button class="toggle-btn" @click="toggleSidebar">
-                <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
-              </button>
+            <!-- Navigation Menu -->
+            <nav class="navigation-menu">
+              <ul>
+                <li>
+                  <a href="#" @click="openJobPostForm">
+                    <i class="icon mdi mdi-bell-outline"></i>
+                    <span v-if="!isSidebarCollapsed">Notification</span>
+                  </a>
+                </li>
 
-              <!-- Navigation Menu -->
-              <nav class="navigation-menu">
-                <h1 class="mx-3 my-3 title-qw">Quickwork</h1>
-                <ul>
-                  <li>
-                    <a href="#" @click="openJobPostForm">
-                      <i class="icon mdi mdi-bell-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Notification</span>
-                    </a>
-                  </li>
+                <li>
+                  <a
+                    href="#"
+                    @click="
+                      () => {
+                        isFormVisible = false
+                      }
+                    "
+                  >
+                    <i class="icon mdi mdi-briefcase-outline"></i>
+                    <span v-if="!isSidebarCollapsed">Job Posted</span>
+                  </a>
+                </li>
 
-                  <li>
-                    <a
-                      href="#"
-                      @click="
-                        () => {
-                          isFormVisible = false
-                        }
-                      "
-                    >
-                      <i class="icon mdi mdi-briefcase-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Job Posted</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="/">
-                      <i class="icon mdi mdi-star-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Review</span>
-                    </a>
-                  </li>
-
-                  <li>
-                    <v-btn
-                      variant="plain"
-                      rounded
-                      @click="onLogout"
-                      :loading="formAction.formProcess"
-                      :disabled="formAction.formProcess"
-                      class="d-flex align-center"
-                    >
-                      <i class="icon mdi mdi-logout" style="margin-right: 10px"></i>
-                      <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
-                    </v-btn>
-                  </li>
-                </ul>
-              </nav>
-            </aside>
+                <li>
+                  <v-btn
+                    variant="plain"
+                    rounded
+                    @click="onLogout"
+                    :loading="formAction.formProcess"
+                    :disabled="formAction.formProcess"
+                    class="d-flex align-center"
+                  >
+                    <i class="icon mdi mdi-logout" style="margin-right: 10px"></i>
+                    <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
+                  </v-btn>
+                </li>
+              </ul>
+            </nav>
           </v-col>
 
           <!-- Middle Column: Search + Jobs + Form -->
@@ -547,25 +538,24 @@ function handleReviewSubmitted(reviewData) {
 
           <!-- Right Column: Job Details / Reviews -->
           <v-col cols="3" class="right-column">
+            <!-- Toggle buttons for details/reviews -->
+            <div class="d-flex justify-space-between mb-4">
+              <v-btn
+                :color="displayMode === 'details' ? 'success' : 'grey'"
+                class="flex-grow-1 mr-2"
+                @click="toggleDisplayMode('details')"
+              >
+                Details
+              </v-btn>
+              <v-btn
+                :color="displayMode === 'reviews' ? 'success' : 'grey'"
+                class="flex-grow-1 ml-2"
+                @click="toggleDisplayMode('reviews')"
+              >
+                Reviews
+              </v-btn>
+            </div>
             <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
-              <!-- Toggle buttons for details/reviews -->
-              <div class="d-flex justify-space-between mb-4">
-                <v-btn
-                  :color="displayMode === 'details' ? 'primary' : 'grey'"
-                  class="flex-grow-1 mr-2"
-                  @click="toggleDisplayMode('details')"
-                >
-                  Details
-                </v-btn>
-                <v-btn
-                  :color="displayMode === 'reviews' ? 'primary' : 'grey'"
-                  class="flex-grow-1 ml-2"
-                  @click="toggleDisplayMode('reviews')"
-                >
-                  Reviews
-                </v-btn>
-              </div>
-
               <!-- Job Details View -->
               <div v-if="displayMode === 'details'">
                 <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />

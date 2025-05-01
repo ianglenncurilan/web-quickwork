@@ -18,14 +18,18 @@ const props = defineProps({
     type: String,
     default: '#FFD700',
   },
+  // Add jobId prop to pass to parent
+  jobId: {
+    type: [Number, String],
+    required: true
+  }
 })
 
-const emit = defineEmits(['update:rating', 'submit'])
+const emit = defineEmits(['update:rating', 'review-submitted'])
 
 const rating = ref(props.initialRating)
 const hoverRating = ref(0)
-const review = ref('')
-const name = ref('')
+const comment = ref('') // Changed from review to match parent component's structure
 const submitted = ref(false)
 const formError = ref('')
 
@@ -74,28 +78,27 @@ const submitReview = () => {
     return
   }
 
-  if (!name.value.trim()) {
-    formError.value = 'Please enter your name'
+  if (!comment.value.trim()) {
+    formError.value = 'Please enter your review'
     return
   }
 
   const reviewData = {
-    name: name.value,
     rating: rating.value,
-    review: review.value,
-    date: new Date().toISOString(),
+    comment: comment.value,
+    // We don't need name as the parent component uses userData.fullname
   }
 
-  emit('submit', reviewData)
+  // Use the new event name that matches what the parent component is listening for
+  emit('review-submitted', reviewData)
   submitted.value = true
   formError.value = ''
 }
 
-const resets = () => {
+const resetForm = () => {
   submitted.value = false
   rating.value = 0
-  review.value = ''
-  name.value = ''
+  comment.value = ''
   formError.value = ''
 }
 </script>
@@ -106,7 +109,7 @@ const resets = () => {
       <h2 class="form-title">Write a Review</h2>
 
       <div class="rating-container">
-        <label class="rating-label ">Your Rating</label>
+        <label class="rating-label">Your Rating</label>
         <div class="stars-container">
           <span
             v-for="index in maxStars"
@@ -125,23 +128,10 @@ const resets = () => {
       </div>
 
       <div class="form-group">
-        <label for="name">Your Name</label>
-        <input
-          type="text"
-          id="name"
-          v-model="name"
-          placeholder="Enter your name"
-          class="form-input"
-        />
-      </div>
-
-
-
-      <div class="form-group">
         <label for="review">Your Review</label>
         <textarea
           id="review"
-          v-model="review"
+          v-model="comment"
           placeholder="Tell us about your experience..."
           class="form-textarea"
         ></textarea>
@@ -156,7 +146,7 @@ const resets = () => {
       <div class="success-content">
         <h2>Thank You!</h2>
         <p>Your review has been submitted successfully.</p>
-        <button @click="resets" class="reset-button">Write Another Review</button>
+        <button @click="resetForm" class="reset-button">Write Another Review</button>
       </div>
     </div>
   </div>
