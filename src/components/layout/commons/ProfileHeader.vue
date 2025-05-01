@@ -11,7 +11,6 @@ const userData = ref({
 })
 
 
-
 const getUser = async () => {
   try {
     const { data, error } = await supabase.auth.getUser()

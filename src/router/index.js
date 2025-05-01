@@ -6,6 +6,7 @@ import PostView from '@/views/PostView.vue';
 import StudentView from '@/views/StudentView.vue';
 import AlertNotification from '@/components/layout/commons/AlertNotification.vue';
 import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue';
+import ApplicationView from '@/views/pages/ApplicationView.vue';
 
 const routes = [
   {
@@ -43,6 +44,13 @@ const routes = [
     name: 'profile',
     component: ProfileHeader,
   },
+  {
+    path: '/application/:jobID',
+    name: 'application',
+    component: ApplicationView,
+    props: true,
+  },
+
 ];
 
 const router = createRouter({
