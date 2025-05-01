@@ -7,6 +7,7 @@ import StudentView from '@/views/StudentView.vue';
 import AlertNotification from '@/components/layout/commons/AlertNotification.vue';
 import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue';
 import ApplicationView from '@/views/pages/ApplicationView.vue';
+import ReviewView from '@/views/pages/ReviewView.vue';
 
 const routes = [
   {
@@ -49,6 +50,11 @@ const routes = [
     name: 'application',
     component: ApplicationView,
     props: true,
+  },
+  {
+    path: '/review',
+    name: 'review',
+    component: ReviewView,
   },
 
 ];

@@ -2,6 +2,7 @@
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
 import ApplicationView from '@/views/pages/ApplicationView.vue'
+import ReviewView from '@/views/pages/ReviewView.vue'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase'
@@ -59,10 +60,12 @@ const getUser = async () => {
 onMounted(() => {
   getUser()
   loadJobsFromStorage()
+  loadRatingsFromStorage() // Load reviews/ratings when component mounts
 })
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings'
+const RATINGS_STORAGE_KEY = 'huntjobs-job-ratings'
 
 // Form state
 const jobForm = ref({
@@ -78,12 +81,18 @@ const jobForm = ref({
 // Job list
 const jobs = ref([])
 
+// Ratings list
+const jobRatings = ref({})
+
 // Edit mode
 const isEditing = ref(false)
 const editingJobId = ref(null)
 const isFormVisible = ref(false) // Track form visibility
 const selectedJob = ref(null)
 const searchQuery = ref('')
+
+// Display mode for right panel
+const displayMode = ref('details') // 'details' or 'reviews'
 
 // Sidebar collapse state
 const isSidebarCollapsed = ref(false)
@@ -115,11 +124,36 @@ function loadJobsFromStorage() {
   }
 }
 
+// Load ratings from localStorage
+function loadRatingsFromStorage() {
+  try {
+    const stored = localStorage.getItem(RATINGS_STORAGE_KEY)
+    jobRatings.value = stored ? JSON.parse(stored) : {}
+  } catch (err) {
+    console.error('Failed to load ratings from localStorage:', err)
+    jobRatings.value = {}
+  }
+}
+
+// Save ratings to localStorage
+function saveRatingsToStorage() {
+  localStorage.setItem(RATINGS_STORAGE_KEY, JSON.stringify(jobRatings.value))
+}
+
 // Watch jobs and update localStorage
 watch(
   jobs,
   (newVal) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
+  },
+  { deep: true },
+)
+
+// Watch ratings and update localStorage
+watch(
+  jobRatings,
+  () => {
+    saveRatingsToStorage()
   },
   { deep: true },
 )
@@ -188,6 +222,23 @@ function postJob() {
 // Show job details
 function showJobDetails(job) {
   selectedJob.value = job
+  displayMode.value = 'details' // Show details by default when clicking a job
+}
+
+// Show job reviews
+function showJobReviews(job) {
+  selectedJob.value = job
+  displayMode.value = 'reviews' // Show reviews when this function is called
+}
+
+// Toggle between details and reviews
+function toggleDisplayMode(mode) {
+  if (mode === 'details' || mode === 'reviews') {
+    displayMode.value = mode // Set the display mode explicitly
+  } else {
+    // Toggle between 'details' and 'reviews' if no mode is provided
+    displayMode.value = displayMode.value === 'details' ? 'reviews' : 'details'
+  }
 }
 
 // Filtered jobs based on search
@@ -200,13 +251,61 @@ const filteredJobs = computed(() => {
   )
 })
 
+// Get average rating for a job
+const getAverageRating = (jobId) => {
+  const ratings = jobRatings.value[jobId] || []
+  if (ratings.length === 0) return 0
+
+  const sum = ratings.reduce((total, rating) => total + rating.rating, 0)
+  return (sum / ratings.length).toFixed(1)
+}
+
+// Get reviews count for a job
+const getReviewsCount = (jobId) => {
+  return (jobRatings.value[jobId] || []).length
+}
+
 // Apply for job
 const dialog = ref(false) // Controls the visibility of the modal
 const selectedJobId = ref(null) // Tracks the job ID for the application
+const ratingDialog = ref(false) // Controls the visibility of the rating modal
 
 function applyForJob(job) {
   selectedJobId.value = job.id // Set the selected job ID
   dialog.value = true // Open the modal
+}
+
+function rateJob(job) {
+  selectedJobId.value = job.id // Set the selected job ID
+  ratingDialog.value = true // Open the rating modal
+}
+
+// Submit a new review/rating
+function submitReview(jobId, review) {
+  if (!jobRatings.value[jobId]) {
+    jobRatings.value[jobId] = []
+  }
+
+  jobRatings.value[jobId].push({
+    id: Date.now(),
+    rating: review.rating,
+    comment: review.comment,
+    username: userData.value.fullname || 'Anonymous',
+    date: new Date().toISOString(),
+  })
+
+  // Close the rating dialog
+  ratingDialog.value = false
+
+  // Update the selected job to show the reviews
+  if (selectedJob.value && selectedJob.value.id === jobId) {
+    showJobReviews(selectedJob.value)
+  }
+}
+
+// Method to receive rating data from the ReviewView component
+function handleReviewSubmitted(reviewData) {
+  submitReview(selectedJobId.value, reviewData)
 }
 </script>
 
@@ -393,11 +492,46 @@ function applyForJob(job) {
                         </h4>
                         <p class="text-body-2 mb-1 text-grey-darken-1">{{ job.company }}</p>
                         <p class="text-caption text-grey">{{ job.description }}</p>
+                        <!-- Display rating information -->
+                        <div class="d-flex align-center mt-1">
+                          <v-rating
+                            :model-value="Number(getAverageRating(job.id))"
+                            color="amber"
+                            density="compact"
+                            size="small"
+                            readonly
+                            half-increments
+                          ></v-rating>
+                          <span class="ml-2 text-caption">
+                            {{ getAverageRating(job.id) }} ({{ getReviewsCount(job.id) }} reviews)
+                          </span>
+                        </div>
                       </v-col>
-                      <v-col cols="auto" class="d-flex align-center">
+                      <v-col cols="auto" class="d-flex align-center flex-column">
+                        <!-- Show Reviews Button -->
+                        <v-btn
+                          color="purple"
+                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2"
+                          elevation="2"
+                          @click.stop="showJobReviews(job)"
+                        >
+                          Reviews
+                        </v-btn>
+
+                        <!-- Rate It Button -->
+                        <v-btn
+                          color="blue"
+                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2"
+                          elevation="2"
+                          @click.stop="rateJob(job)"
+                        >
+                          Rate This
+                        </v-btn>
+
+                        <!-- Apply Now Button -->
                         <v-btn
                           color="green"
-                          class="rounded-pill px-4 py-2 text-white text-capitalize"
+                          class="rounded-pill px-6 py-0 text-white text-capitalize"
                           elevation="2"
                           @click.stop="applyForJob(job)"
                         >
@@ -411,17 +545,60 @@ function applyForJob(job) {
             </v-container>
           </v-col>
 
-          <!-- Right Column: Job Details -->
+          <!-- Right Column: Job Details / Reviews -->
           <v-col cols="3" class="right-column">
             <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
-              <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
-              <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
-              <p class="text-body-2 mb-2 text-grey-darken-1">
-                Job description: {{ selectedJob.description }}
-              </p>
-              <p class="text-caption text-grey mb-2">Job Type: {{ selectedJob.type }}</p>
-              <p class="text-caption text-grey-darken-1">Monthly rate: {{ selectedJob.rate }}</p>
-              <p class="text-caption text-grey-darken-1">Job link: {{ selectedJob.link }}</p>
+              <!-- Toggle buttons for details/reviews -->
+              <div class="d-flex justify-space-between mb-4">
+                <v-btn
+                  :color="displayMode === 'details' ? 'primary' : 'grey'"
+                  class="flex-grow-1 mr-2"
+                  @click="toggleDisplayMode('details')"
+                >
+                  Details
+                </v-btn>
+                <v-btn
+                  :color="displayMode === 'reviews' ? 'primary' : 'grey'"
+                  class="flex-grow-1 ml-2"
+                  @click="toggleDisplayMode('reviews')"
+                >
+                  Reviews
+                </v-btn>
+              </div>
+
+              <!-- Job Details View -->
+              <div v-if="displayMode === 'details'">
+                <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
+                <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
+                <p class="text-body-2 mb-2 text-grey-darken-1">
+                  Job description: {{ selectedJob.description }}
+                </p>
+                <p class="text-caption text-grey mb-2">Job Type: {{ selectedJob.type }}</p>
+                <p class="text-caption text-grey-darken-1">Monthly rate: {{ selectedJob.rate }}</p>
+                <p class="text-caption text-grey-darken-1">Job link: {{ selectedJob.link }}</p>
+              </div>
+
+              <!-- Job Reviews View -->
+              <div v-if="displayMode === 'reviews'" class="reviews-container">
+                <h4 class="mb-3">Reviews for {{ selectedJob.title }}</h4>
+                <div v-if="jobRatings[selectedJob.id] && jobRatings[selectedJob.id].length > 0">
+                  <v-list>
+                    <v-list-item v-for="review in jobRatings[selectedJob.id]" :key="review.id">
+                      <v-card class="pa-3">
+                        <div class="d-flex justify-space-between">
+                          <span>{{ review.username }}</span>
+                          <span>{{ new Date(review.date).toLocaleDateString() }}</span>
+                        </div>
+                        <v-rating :model-value="review.rating" readonly color="amber"></v-rating>
+                        <p>{{ review.comment }}</p>
+                      </v-card>
+                    </v-list-item>
+                  </v-list>
+                </div>
+                <div v-else>
+                  <p>No reviews yet.</p>
+                </div>
+              </div>
             </v-card>
 
             <!-- Message when no job is selected -->
@@ -440,7 +617,7 @@ function applyForJob(job) {
       <!-- Application Dialog -->
       <v-dialog v-model="dialog" max-width="800px">
         <v-card>
-          <v-card-title class="headline">Application Form</v-card-title>
+          <v-card-title class="headline text-center pt-5"></v-card-title>
           <v-card-text>
             <!-- Pass the selected job ID to the ApplicationView -->
             <ApplicationView v-if="selectedJobId" :jobId="selectedJobId" />
@@ -448,6 +625,25 @@ function applyForJob(job) {
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="red" text @click="dialog = false">Close</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Rating Dialog -->
+      <v-dialog v-model="ratingDialog" max-width="800px">
+        <v-card>
+          <v-card-title class="headline text-center pt-5">Rate This Job</v-card-title>
+          <v-card-text>
+            <!-- Pass the selected job ID to ReviewView and listen for submission event -->
+            <ReviewView
+              v-if="selectedJobId"
+              :jobId="selectedJobId"
+              @review-submitted="handleReviewSubmitted"
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="red" text @click="ratingDialog = false">Close</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

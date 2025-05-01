@@ -75,7 +75,7 @@ const onFormSubmit = () => {
 
 function handleLogin() {
   if (!selectedRole.value) {
-    console.error('Please select a role before logging in.')
+    formAction.value.formErrorMessage = 'Please select a role before logging in.'
     return
   }
 
@@ -85,7 +85,7 @@ function handleLogin() {
   } else if (selectedRole.value === 'Businessman') {
     router.replace('/post') // Navigate to PostView
   } else {
-    console.error('Invalid role selected.')
+    formAction.value.formErrorMessage = 'Invalid role selected.'
   }
 }
 </script>
@@ -146,14 +146,13 @@ function handleLogin() {
                 ></v-text-field>
 
                 <v-select
-                class="dropdown-label mt-3"
+                  class="dropdown-label mt-3"
                   v-model="selectedRole"
                   :items="roles"
                   label="Select Role"
                   :rules="[requiredValidator]"
                   outlined
                   required
-
                 >
                 </v-select>
 
