@@ -1,10 +1,8 @@
 <script setup>
-import { useRouter } from 'vue-router'
-import { onMounted, ref } from 'vue'
-import { supabase, formActionDefault } from '@/utils/supabase'
-import { getAvatarText } from '@/utils/helpers'
 
-const router = useRouter()
+import { onMounted, ref } from 'vue'
+import { supabase} from '@/utils/supabase'
+import { getAvatarText } from '@/utils/helpers'
 
 const userData = ref({
   initials: '',
@@ -12,25 +10,7 @@ const userData = ref({
   fullname: '',
 })
 
-const formAction = ref({
-  ...formActionDefault,
-})
 
-const onLogout = async () => {
-  formAction.value = {
-    ...formActionDefault,
-  }
-  formAction.value.formProcess = true
-
-  const { error } = await supabase.auth.signOut()
-
-  if (error) {
-    console.error('Error signing out:', error)
-    return
-  }
-  formAction.value.formProcess = false
-  router.replace('/')
-}
 
 const getUser = async () => {
   try {
@@ -59,42 +39,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-container style="height: 300px" fluid>
+  <v-container style="height: auto" fluid>
     <v-row justify="center">
-      <v-menu min-width="200px">
-        <template v-slot:activator="{ props }">
-          <v-btn icon v-bind="props">
-            <v-avatar color="brown" size="large">
-              <span class="text-h5">{{ userData.initials }}</span>
-            </v-avatar>
-          </v-btn>
-        </template>
-        <v-card>
-          <v-card-text>
-            <div class="mx-auto text-center">
-              <v-avatar color="brown">
-                <span class="text-h5">{{ userData.initials }}</span>
-              </v-avatar>
-              <h3>{{ userData.fullname }}</h3>
-              <p class="text-caption mt-1">
-                {{ userData.email }}
-              </p>
-              <v-divider class="my-3"></v-divider>
-              <v-btn variant="text" rounded> Edit Account </v-btn>
-              <v-divider class="my-3"></v-divider>
-              <v-btn
-                variant="plain"
-                rounded
-                @click="onLogout"
-                :loading="formAction.formProcess"
-                :disabled="formAction.formProcess"
-              >
-                Logout
-              </v-btn>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-menu>
+      <div class="mx-auto text-center">
+        <v-avatar color="brown" size="large" class="mb-2">
+          <span class="text-h5">{{ userData.initials }}</span>
+        </v-avatar>
+        <h3>{{ userData.fullname }}</h3>
+        <p class="text-caption mt-1">
+          {{ userData.email }}
+        </p>
+      </div>
     </v-row>
   </v-container>
 </template>

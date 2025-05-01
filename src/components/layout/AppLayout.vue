@@ -1,24 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { isAuthenticated } from '@/utils/supabase'
-import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
-
+import { ref } from 'vue'
 const theme = ref('light')
 
 function toggleTheme() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
-
-const isLoggedIn = ref(false)
-
-const getLoggedStatus = async () => {
-    isLoggedIn.value = await isAuthenticated()
-
-}
-
-onMounted(() => {
-  getLoggedStatus()
-})
 </script>
 
 <template>
@@ -43,10 +29,6 @@ onMounted(() => {
         :prepend-icon="theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'"
         @click="toggleTheme"
       ></v-btn>
-
-      <!-- Profile Header - Only show when logged in -->
-
-      <ProfileHeader v-if = "isLoggedIn"></ProfileHeader>
     </v-app-bar>
 
     <!-- Main Content -->
