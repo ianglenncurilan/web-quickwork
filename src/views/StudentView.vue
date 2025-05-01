@@ -146,7 +146,13 @@ const filteredJobs = computed(() => {
             <v-container fluid>
               <v-row dense>
                 <v-col v-for="job in filteredJobs" :key="job.id" cols="12" class="d-flex">
-                  <v-card class="pa-5 w-100 zoom-hover" style="background-color: #D9D59A;" col="12" md="7" elevation="3">
+                  <v-card
+                    class="pa-5 w-100 zoom-hover"
+                    style="background-color: #d9d59a"
+                    col="12"
+                    md="7"
+                    elevation="3"
+                  >
                     <v-row no-gutters align="center">
                       <v-col cols="auto">
                         <v-img
@@ -184,8 +190,8 @@ const filteredJobs = computed(() => {
           </v-col>
 
           <!-- Right Column: Job Details -->
-          <v-col cols="3" >
-            <v-card v-if="selectedJob" class="pa-6"  elevation="5" style="background-color: #D9D59A;">
+          <v-col cols="3">
+            <v-card v-if="selectedJob" class="pa-6" elevation="5" style="background-color: #d9d59a">
               <!-- X Button sa Top-Right -->
               <div class="d-flex justify-end">
                 <v-btn icon class="close-btn" @click="selectedJob = null">
@@ -194,26 +200,27 @@ const filteredJobs = computed(() => {
               </div>
 
               <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4 rounded-lg" />
-              <div class="pa-4 elevation-2" style="background-color: #ffff;">
-  <h4 class="mb-2 font-weight-medium text-black">Job name: {{ selectedJob.title }}</h4>
+              <div class="pa-4 elevation-2" style="background-color: #ffff">
+                <h4 class="mb-2 font-weight-medium text-black">
+                  Job name: {{ selectedJob.title }}
+                </h4>
 
-  <p class="text-body-2 mb-2 text-grey-darken-1">
-    <strong>Job description:</strong> {{ selectedJob.description }}
-  </p>
+                <p class="text-body-2 mb-2 text-grey-darken-1">
+                  <strong>Job description:</strong> {{ selectedJob.description }}
+                </p>
 
-  <p class="text-caption text-grey mb-2">
-    <strong>Job Type:</strong> {{ selectedJob.type }}
-  </p>
+                <p class="text-caption text-grey mb-2">
+                  <strong>Job Type:</strong> {{ selectedJob.type }}
+                </p>
 
-  <p class="text-caption text-grey-darken-1 mb-2">
-    <strong>Monthly rate:</strong> {{ selectedJob.rate }}
-  </p>
+                <p class="text-caption text-grey-darken-1 mb-2">
+                  <strong>Monthly rate:</strong> {{ selectedJob.rate }}
+                </p>
 
-  <p class="text-caption text-grey-darken-1">
-    <strong>Job link:</strong> {{ selectedJob.link }}
-  </p>
-</div>
-
+                <p class="text-caption text-grey-darken-1">
+                  <strong>Job link:</strong> {{ selectedJob.link }}
+                </p>
+              </div>
             </v-card>
 
             <!-- Message when no job is selected -->
@@ -226,10 +233,8 @@ const filteredJobs = computed(() => {
                   <v-col cols="12">
                     <h4 class="text-grey-darken-1 font-weight-medium mb-2">No Job Selected</h4>
                     <p class="text-white text-body-2">
-                      <p>
-  Click <span style="color: teal; font-weight: bold;">"Review"</span> to see the full details here.
-</p>
-
+                      Click <span style="color: teal; font-weight: bold">"Review"</span> to see the
+                      full details here.
                     </p>
                   </v-col>
                 </v-row>
