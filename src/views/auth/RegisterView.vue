@@ -295,7 +295,7 @@ const handleRegister = async () => {
 }
 
 .v-btn:active {
-  transform: scale(0.95); /* Slightly shrink the button on click */
-  background-color: #002d1f; /* Darker background color on click */
+  transform: scale(0.95);
+  background-color: #002d1f;
 }
 </style>

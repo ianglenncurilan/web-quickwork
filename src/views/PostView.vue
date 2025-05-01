@@ -1,6 +1,64 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
+import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
 import { ref, onMounted, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase, formActionDefault } from '@/utils/supabase'
+import { getAvatarText } from '@/utils/helpers'
+
+const router = useRouter()
+
+const userData = ref({
+  initials: '',
+  email: '',
+  fullname: '',
+})
+
+const formAction = ref({
+  ...formActionDefault,
+})
+
+const onLogout = async () => {
+  formAction.value = {
+    ...formActionDefault,
+  }
+  formAction.value.formProcess = true
+
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error('Error signing out:', error)
+    return
+  }
+  formAction.value.formProcess = false
+  router.replace('/')
+}
+
+const getUser = async () => {
+  try {
+    const { data, error } = await supabase.auth.getUser()
+
+    if (error) {
+      console.error('Error fetching user:', error)
+      return
+    }
+
+    if (data && data.user && data.user.user_metadata) {
+      const metadata = data.user.user_metadata
+
+      userData.value.email = metadata.email
+      userData.value.fullname = metadata.firstname + ' ' + metadata.lastname
+      userData.value.initials = getAvatarText(userData.value.fullname)
+    }
+  } catch (error) {
+    console.error('Error in getUser function:', error)
+  }
+}
+
+onMounted(() => {
+  getUser()
+  loadJobsFromStorage()
+})
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings'
@@ -55,10 +113,6 @@ function loadJobsFromStorage() {
     jobs.value = []
   }
 }
-
-onMounted(() => {
-  loadJobsFromStorage()
-})
 
 // Watch jobs and update localStorage
 watch(
@@ -169,19 +223,9 @@ const filteredJobs = computed(() => {
           <!-- Left Column: Navigation -->
           <v-col cols="3" class="left-column my-5">
             <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
-              <div class="profile-section">
-                <v-avatar :size="isSidebarCollapsed ? 50 : 80" class="mb-2">
-                  <v-img src="/images/profile.jpg" alt="Profile Picture" />
-                </v-avatar>
+              <!-- Profile Header -->
+              <ProfileHeader :isSidebarCollapsed="isSidebarCollapsed" />
 
-                <!-- Hide name and role when collapsed -->
-                <transition name="fade">
-                  <div v-if="!isSidebarCollapsed">
-                    <p class="profile-name">Jasmin</p>
-                    <p class="profile-role">Business Owner</p>
-                  </div>
-                </transition>
-              </div>
               <!-- Arrow Button -->
               <button class="toggle-btn" @click="toggleSidebar">
                 <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
@@ -224,10 +268,17 @@ const filteredJobs = computed(() => {
                   </li>
 
                   <li>
-                    <a href="/">
-                      <i class="icon mdi mdi-logout" style="color: red"></i>
+                    <v-btn
+                      variant="plain"
+                      rounded
+                      @click="onLogout"
+                      :loading="formAction.formProcess"
+                      :disabled="formAction.formProcess"
+                      class="d-flex align-center"
+                    >
+                      <i class="icon mdi mdi-logout" style="margin-right: 10px"></i>
                       <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
-                    </a>
+                    </v-btn>
                   </li>
                 </ul>
               </nav>
@@ -249,7 +300,6 @@ const filteredJobs = computed(() => {
                 </button>
               </div>
             </div>
-
 
             <!-- Job Form (Middle) -->
             <v-card v-if="isFormVisible" class="pa-4 mb-6 rounded-xl" elevation="1" flat>
@@ -370,7 +420,7 @@ const filteredJobs = computed(() => {
           </v-col>
 
           <!-- Right Column: Job Details -->
-          <v-col cols="3" class="">
+          <v-col cols="3" class="right-column">
             <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
               <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
               <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
@@ -383,8 +433,12 @@ const filteredJobs = computed(() => {
             </v-card>
 
             <!-- Message when no job is selected -->
-            <v-card v-else class="pa-6 rounded-xl d-flex align-center justify-center" elevation="5">
-              <v-icon size="36" color="grey">mdi-cursor-pointer</v-icon>
+            <v-card
+              v-else
+              class="card-unclick pa-6 rounded-xl d-flex align-center justify-center"
+              elevation="5"
+            >
+              <v-icon size="40" color="grey">mdi-cursor-pointer</v-icon>
               <p class="ml-2 text-grey-darken-1">Select a job to view details</p>
             </v-card>
           </v-col>
@@ -655,5 +709,27 @@ const filteredJobs = computed(() => {
 .zoom-hover:hover {
   transform: scale(1.02);
   z-index: 1;
+}
+
+.card-unclick {
+  width: 100%; /* Make it take the full width of the column */
+  height: 575px; /* Increase the height */
+  padding: 20px; /* Add more padding for better spacing */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 18px; /* Increase font size for better readability */
+  background-color: #f5f5f5; /* Optional: Add a subtle background color */
+  border-radius: 10px; /* Keep the rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease; /* Add hover effects */
+}
+
+.card-unclick:hover {
+  transform: scale(1.05); /* Slightly enlarge on hover */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a stronger shadow on hover */
 }
 </style>
