@@ -8,6 +8,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase'
 import { getAvatarText } from '@/utils/helpers'
+import FormDialog from '@/views/pages/FormDialog.vue'
 
 const router = useRouter()
 
@@ -140,8 +141,23 @@ const isSidebarCollapsed = ref(false)
 
 // Dialog controls
 const dialog = ref(false) // Controls the visibility of the application modal
-const selectedJobId = ref(null) // Tracks the job ID for the application
 const ratingDialog = ref(false) // Controls the visibility of the rating modal
+
+// Dialog visibility for FormDialog
+const formDialogVisible = ref(false) // Controls the visibility of the FormDialog
+const selectedJobId = ref(null) // Tracks the job ID for the selected job
+
+// Handle the "Applied Forms" button click
+function showJobApplications(job) {
+  selectedJobId.value = job.id // Set the selected job ID
+  formDialogVisible.value = true // Open the FormDialog
+}
+
+// Handle the form-viewed event
+function handleFormViewed(jobId) {
+  console.log(`Form viewed for job ID: ${jobId}`)
+  formDialogVisible.value = false // Close the dialog after viewing
+}
 
 // Function to open the job post form
 function openJobPostForm() {
@@ -310,12 +326,6 @@ function showJobDetails(job) {
 function showJobReviews(job) {
   selectedJob.value = job
   displayMode.value = 'reviews' // Show reviews when this function is called
-}
-
-// Show job applications
-function showJobApplications(job) {
-  selectedJob.value = job // Set the selected job
-  displayMode.value = 'appliedForms' // Switch to "appliedForms" mode
 }
 
 // Added missing function that was referenced in the template
@@ -620,6 +630,7 @@ const formatDate = (dateString) => {
                         >
                           Reviews
                         </v-btn>
+                        <!-- Applied Forms Button -->
                         <v-btn
                           color="green"
                           class="rounded-pill px-6 py-0 text-white text-capitalize mb-2 mt-2"
@@ -878,6 +889,13 @@ const formatDate = (dateString) => {
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <!-- FormDialog Component -->
+      <FormDialog
+        v-model="formDialogVisible"
+        :jobId="selectedJobId"
+        @form-viewed="handleFormViewed"
+      />
     </template>
   </AppLayout>
 </template>

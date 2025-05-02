@@ -11,6 +11,7 @@ import ReviewView from '@/views/pages/ReviewView.vue'
 import NotificationComponent from '@/components/layout/commons/NotificationComponent.vue'
 import NotificationManager from '@/components/layout/commons/NotificationManager.vue'
 import ApplyView from '@/views/pages/ApplyView.vue'
+import FormDialog from '@/views/pages/FormDialog.vue'
 
 const routes = [
   {
@@ -73,6 +74,11 @@ const routes = [
     path: '/apply',
     name: 'apply',
     component: ApplyView,
+  },
+  {
+    path: '/formdialog',
+    name: 'formdialog',
+    component: FormDialog,
   },
 ]
 
