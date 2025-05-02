@@ -2,52 +2,55 @@
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
 import { ref, onMounted, watch, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase'
 import { getAvatarText } from '@/utils/helpers'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
+// Constants
+const STORAGE_KEY = 'huntjobs-job-listings'
 
+
+// User Data
 const userData = ref({
   initials: '',
   email: '',
   fullname: '',
 })
 
+// Form Action
 const formAction = ref({
   ...formActionDefault,
 })
-
+const isSidebarCollapsed = ref(false) // Default value
+// Logout Function
 const onLogout = async () => {
-  formAction.value = {
-    ...formActionDefault,
-  }
-  formAction.value.formProcess = true
+  console.log('Logout button clicked') // Debugging
+  formAction.value = { ...formActionDefault, formProcess: true }
 
   const { error } = await supabase.auth.signOut()
-
   if (error) {
     console.error('Error signing out:', error)
     return
   }
+
   formAction.value.formProcess = false
   router.replace('/')
 }
 
+// Fetch User Data
 const getUser = async () => {
   try {
     const { data, error } = await supabase.auth.getUser()
-
     if (error) {
       console.error('Error fetching user:', error)
       return
     }
 
-    if (data && data.user && data.user.user_metadata) {
+    if (data?.user?.user_metadata) {
       const metadata = data.user.user_metadata
-
       userData.value.email = metadata.email
-      userData.value.fullname = metadata.firstname + ' ' + metadata.lastname
+      userData.value.fullname = `${metadata.firstname} ${metadata.lastname}`
       userData.value.initials = getAvatarText(userData.value.fullname)
     }
   } catch (error) {
@@ -55,15 +58,7 @@ const getUser = async () => {
   }
 }
 
-onMounted(() => {
-  getUser()
-  loadJobsFromStorage()
-})
-
-// Constants
-const STORAGE_KEY = 'huntjobs-job-listings'
-
-// Form state
+// Job Form State
 const jobForm = ref({
   title: '',
   company: '',
@@ -74,70 +69,44 @@ const jobForm = ref({
   link: '',
 })
 
-// Job list
+// Job List and States
 const jobs = ref([])
-
-// Edit mode
 const isEditing = ref(false)
 const editingJobId = ref(null)
-const isFormVisible = ref(false) // Track form visibility
+const isFormVisible = ref(false)
 const selectedJob = ref(null)
 const searchQuery = ref('')
 
-// Sidebar collapse state
-const isSidebarCollapsed = ref(false)
+// Open and Close Job Form
+const openJobPostForm = () => (isFormVisible.value = true)
+const closeJobPostForm = () => (isFormVisible.value = false)
 
-// Function to toggle sidebar collapse
-function toggleSidebar() {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
-// Function to open the job post form
-function openJobPostForm() {
-  isFormVisible.value = true // Show the job form
-}
-
-// Function to close the job post form
-function closeJobPostForm() {
-  isFormVisible.value = false // Hide the job form
-}
-
-// Load jobs from localStorage
-function loadJobsFromStorage() {
+// Load Jobs from LocalStorage
+const loadJobsFromStorage = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    const parsed = stored ? JSON.parse(stored) : []
-    jobs.value = Array.isArray(parsed) ? parsed : []
+    jobs.value = stored ? JSON.parse(stored) : []
   } catch (err) {
     console.error('Failed to load jobs from localStorage:', err)
     jobs.value = []
   }
 }
 
-// Watch jobs and update localStorage
-watch(
-  jobs,
-  (newVal) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
-  },
-  { deep: true },
-)
+// Watch Jobs and Update LocalStorage
+watch(jobs, (newVal) => localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal)), { deep: true })
 
-// Upload image
-function handleImageUpload(event) {
+// Handle Image Upload
+const handleImageUpload = (event) => {
   const file = event.target?.files?.[0] || event
   if (file) {
     const reader = new FileReader()
-    reader.onload = (e) => {
-      jobForm.value.imageUrl = e.target.result
-    }
+    reader.onload = (e) => (jobForm.value.imageUrl = e.target.result)
     reader.readAsDataURL(file)
   }
 }
 
-// Post or update job
-function postJob() {
-  // Validate form fields
+// Post or Update Job
+const postJob = () => {
   if (
     !jobForm.value.title.trim() ||
     !jobForm.value.description.trim() ||
@@ -151,26 +120,16 @@ function postJob() {
   }
 
   if (isEditing.value && editingJobId.value !== null) {
-    // Update existing job
     const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
     if (index !== -1) {
-      jobs.value[index] = {
-        ...jobs.value[index],
-        ...jobForm.value,
-      }
+      jobs.value[index] = { ...jobs.value[index], ...jobForm.value }
     }
-    isEditing.value = false // Exit editing mode
-    editingJobId.value = null // Clear the editing job ID
+    isEditing.value = false
+    editingJobId.value = null
   } else {
-    // Add new job
-    const newJob = {
-      id: Date.now(),
-      ...jobForm.value,
-    }
-    jobs.value.unshift(newJob)
+    jobs.value.unshift({ id: Date.now(), ...jobForm.value })
   }
 
-  // Reset form
   jobForm.value = {
     title: '',
     company: '',
@@ -180,31 +139,30 @@ function postJob() {
     rate: '',
     link: '',
   }
-
-  closeJobPostForm() // Close the job form
+  closeJobPostForm()
 }
 
-// Delete job
-function deleteJob(id) {
+// Delete Job
+const deleteJob = (id) => {
   if (confirm('Are you sure you want to delete this job?')) {
     jobs.value = jobs.value.filter((job) => job.id !== id)
   }
 }
 
-// Edit job
-function editJob(job) {
-  jobForm.value = { ...job } // Populate the form with the selected job's data
-  editingJobId.value = job.id // Set the ID of the job being edited
-  isEditing.value = true // Enable editing mode
-  isFormVisible.value = true // Show the job form
+// Edit Job
+const editJob = (job) => {
+  jobForm.value = { ...job }
+  editingJobId.value = job.id
+  isEditing.value = true
+  isFormVisible.value = true
 }
 
-// Show job details
-function showJobDetails(job) {
+// Show Job Details
+const showJobDetails = (job) => {
   selectedJob.value = job
 }
 
-// Filtered jobs based on search
+// Filter Jobs Based on Search Query
 const filteredJobs = computed(() => {
   const searchText = searchQuery.value.toLowerCase()
   return jobs.value.filter((job) =>
@@ -212,6 +170,12 @@ const filteredJobs = computed(() => {
       field.toLowerCase().includes(searchText),
     ),
   )
+})
+
+// Lifecycle Hook
+onMounted(() => {
+  loadJobsFromStorage()
+  getUser()
 })
 </script>
 
@@ -226,21 +190,11 @@ const filteredJobs = computed(() => {
               <!-- Profile Header -->
               <ProfileHeader :isSidebarCollapsed="isSidebarCollapsed" />
 
-              <!-- Arrow Button -->
-              <button class="toggle-btn" @click="toggleSidebar">
-                <v-icon>{{ isSidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
-              </button>
-
               <!-- Navigation Menu -->
               <nav class="navigation-menu">
-                <h1 class="mx-3 my-3 title-qw">Quickwork</h1>
+                <h1 class="mx-3  title-qw">Quickwork</h1>
                 <ul>
-                  <li>
-                    <a href="#" @click="openJobPostForm">
-                      <i class="icon mdi mdi-bell-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Notification</span>
-                    </a>
-                  </li>
+                  
                   <li>
                     <a href="#" @click="openJobPostForm">
                       <i class="icon mdi mdi-plus-circle-outline"></i>
@@ -280,6 +234,7 @@ const filteredJobs = computed(() => {
                       <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
                     </v-btn>
                   </li>
+                 
                 </ul>
               </nav>
             </aside>
@@ -420,26 +375,55 @@ const filteredJobs = computed(() => {
           </v-col>
 
           <!-- Right Column: Job Details -->
-          <v-col cols="3" class="right-column">
-            <v-card v-if="selectedJob" class="pa-6 rounded-xl" elevation="5">
-              <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4" />
-              <h4 class="mb-2 font-weight-medium">Job name: {{ selectedJob.title }}</h4>
-              <p class="text-body-2 mb-2 text-grey-darken-1">
-                Job description: {{ selectedJob.description }}
-              </p>
-              <p class="text-caption text-grey mb-2">Job Type: {{ selectedJob.type }}</p>
-              <p class="text-caption text-grey-darken-1">Monthly rate: {{ selectedJob.rate }}</p>
-              <p class="text-caption text-grey-darken-1">Job link: {{ selectedJob.link }}</p>
+          <v-col cols="3">
+            <v-card v-if="selectedJob" class="pa-6" elevation="5" style="background-color: #f2e7c4">
+              <!-- X Button sa Top-Right -->
+              <div class="d-flex justify-end">
+                <v-btn icon class="close-btn" @click="selectedJob = null">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </div>
+
+              <v-img :src="selectedJob.imageUrl" height="200px" cover class="mb-4 rounded-lg" />
+              <div class="pa-4 elevation-2" style="background-color: #ffff">
+                <h4 class="mb-2 font-weight-medium text-black">
+                  Job name: {{ selectedJob.title }}
+                </h4>
+
+                <p class="text-body-2 mb-2 text-grey-darken-1">
+                  <strong>Job description:</strong> {{ selectedJob.description }}
+                </p>
+
+                <p class="text-caption text-grey mb-2">
+                  <strong>Job Type:</strong> {{ selectedJob.type }}
+                </p>
+
+                <p class="text-caption text-grey-darken-1 mb-2">
+                  <strong>Monthly rate:</strong> {{ selectedJob.rate }}
+                </p>
+
+                <p class="text-caption text-grey-darken-1">
+                  <strong>Job link:</strong> {{ selectedJob.link }}
+                </p>
+              </div>
             </v-card>
 
             <!-- Message when no job is selected -->
-            <v-card
-              v-else
-              class="card-unclick pa-6 rounded-xl d-flex align-center justify-center"
-              elevation="5"
-            >
-              <v-icon size="40" color="grey">mdi-cursor-pointer</v-icon>
-              <p class="ml-2 text-grey-darken-1">Select a job to view details</p>
+            <v-card v-else class="pa-10 text-center" elevation="3" color="#F2E7C4">
+              <v-container>
+                <v-row align="center" justify="center">
+                  <v-col cols="12">
+                    <v-icon size="56" color="black">mdi-briefcase-search</v-icon>
+                  </v-col>
+                  <v-col cols="12">
+                    <h4 class="text-grey-darken-1 font-weight-medium mb-2">No Job Selected</h4>
+                    <p class="text-black text-body-2">
+                      Click <span style="color: #328e6e; font-weight: bold">"Image"</span> to see
+                      the full details here.
+                    </p>
+                  </v-col>
+                </v-row>
+              </v-container>
             </v-card>
           </v-col>
         </v-row>
@@ -532,7 +516,7 @@ const filteredJobs = computed(() => {
 /* Sidebar Styles */
 .sidebar {
   width: 350px;
-  background-color: #ffffff;
+  background-color: #f2e7c4;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -540,11 +524,6 @@ const filteredJobs = computed(() => {
   height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
-}
-
-.sidebar.collapsed {
-  width: 60px; /* Collapsed width */
-  padding: 10px;
 }
 
 .toggle-btn {
@@ -578,7 +557,7 @@ const filteredJobs = computed(() => {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  margin-bottom: 10px;
+  margin-bottom: 40px;
 }
 
 .profile-name {
@@ -592,7 +571,6 @@ const filteredJobs = computed(() => {
   color: #757575;
   margin: 0;
 }
-
 .navigation-menu ul {
   list-style: none;
   padding: 0;
@@ -616,7 +594,7 @@ const filteredJobs = computed(() => {
 }
 
 .navigation-menu a:hover {
-  background-color: #00796b;
+  background-color: #ffff;
 }
 
 .icon {
@@ -710,26 +688,13 @@ const filteredJobs = computed(() => {
   transform: scale(1.02);
   z-index: 1;
 }
-
-.card-unclick {
-  width: 100%; /* Make it take the full width of the column */
-  height: 575px; /* Increase the height */
-  padding: 20px; /* Add more padding for better spacing */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 18px; /* Increase font size for better readability */
-  background-color: #f5f5f5; /* Optional: Add a subtle background color */
-  border-radius: 10px; /* Keep the rounded corners */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease; /* Add hover effects */
+.close-btn {
+  position: relative;
+  top: -10px;
+  right: -10px;
+  color: #444;
 }
-
-.card-unclick:hover {
-  transform: scale(1.05); /* Slightly enlarge on hover */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a stronger shadow on hover */
+.close-btn:hover {
+  color: white;
 }
 </style>

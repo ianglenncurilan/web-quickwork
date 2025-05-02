@@ -63,18 +63,6 @@ onMounted(() => {
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings'
-
-// Form state
-const jobForm = ref({
-  title: '',
-  company: '',
-  imageUrl: '',
-  description: '',
-  type: '',
-  rate: '',
-  link: '',
-})
-
 // Job list
 const jobs = ref([])
 
@@ -84,24 +72,6 @@ const editingJobId = ref(null)
 const isFormVisible = ref(false) // Track form visibility
 const selectedJob = ref(null)
 const searchQuery = ref('')
-
-// Sidebar collapse state
-const isSidebarCollapsed = ref(false)
-
-// Function to toggle sidebar collapse
-function toggleSidebar() {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
-// Function to open the job post form
-function openJobPostForm() {
-  isFormVisible.value = true // Show the job form
-}
-
-// Function to close the job post form
-function closeJobPostForm() {
-  isFormVisible.value = false // Hide the job form
-}
 
 // Load jobs from localStorage
 function loadJobsFromStorage() {
@@ -134,55 +104,6 @@ function handleImageUpload(event) {
     }
     reader.readAsDataURL(file)
   }
-}
-
-// Post or update job
-function postJob() {
-  // Validate form fields
-  if (
-    !jobForm.value.title.trim() ||
-    !jobForm.value.description.trim() ||
-    !jobForm.value.type.trim() ||
-    !jobForm.value.rate.trim() ||
-    !jobForm.value.link.trim() ||
-    !jobForm.value.imageUrl
-  ) {
-    alert('Please complete all fields.')
-    return
-  }
-
-  if (isEditing.value && editingJobId.value !== null) {
-    // Update existing job
-    const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
-    if (index !== -1) {
-      jobs.value[index] = {
-        ...jobs.value[index],
-        ...jobForm.value,
-      }
-    }
-    isEditing.value = false // Exit editing mode
-    editingJobId.value = null // Clear the editing job ID
-  } else {
-    // Add new job
-    const newJob = {
-      id: Date.now(),
-      ...jobForm.value,
-    }
-    jobs.value.unshift(newJob)
-  }
-
-  // Reset form
-  jobForm.value = {
-    title: '',
-    company: '',
-    imageUrl: '',
-    description: '',
-    type: '',
-    rate: '',
-    link: '',
-  }
-
-  closeJobPostForm() // Close the job form
 }
 
 // Show job details
@@ -225,12 +146,6 @@ function applyForJob(job) {
               <nav class="navigation-menu">
                 <h1 class="mx-3 my-3 title-qw">Quickwork</h1>
                 <ul>
-                  <li>
-                    <a href="#" @click="">
-                      <i class="icon mdi mdi-bell-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Notification</span>
-                    </a>
-                  </li>
 
                   <li>
                     <a
@@ -745,4 +660,5 @@ function applyForJob(job) {
   transform: scale(1.05); /* Slightly enlarge on hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a stronger shadow on hover */
 }
+
 </style>

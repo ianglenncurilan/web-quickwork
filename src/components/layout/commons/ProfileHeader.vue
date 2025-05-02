@@ -41,7 +41,7 @@ onMounted(() => {
   <v-container style="height: auto" fluid>
     <v-row justify="center">
       <div class="mx-auto text-center">
-        <v-avatar color="brown" size="large" class="mb-2">
+        <v-avatar color="brown" size="90" class="mb-0">
           <span class="text-h5">{{ userData.initials }}</span>
         </v-avatar>
         <h3>{{ userData.fullname }}</h3>
