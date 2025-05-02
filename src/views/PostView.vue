@@ -27,6 +27,8 @@ const formAction = ref({
   ...formActionDefault,
 })
 
+const notifications = ref([])
+
 const onLogout = async () => {
   formAction.value = {
     ...formActionDefault,
@@ -312,6 +314,12 @@ function handleReviewSubmitted(reviewData) {
   }
 }
 
+// Handle application submission
+function handleApplicationSubmitted(applicationData) {
+  notifications.value.push(applicationData)
+  notificationDialog.value = true // Open the notification dialog
+}
+
 // Filtered jobs based on search
 const filteredJobs = computed(() => {
   const searchText = searchQuery.value.toLowerCase()
@@ -341,8 +349,8 @@ const filteredJobs = computed(() => {
                 <ul>
                   <li>
                     <v-btn
-                      color="blue"
-                      class="rounded-pill px-6 py-2 text-white text-capitalize"
+
+                      class="rounded-pill px-8 py-2 text-capitalize"
                       elevation="2"
                       @click="openNotificationDialog"
                     >
@@ -656,10 +664,13 @@ const filteredJobs = computed(() => {
       <!-- Application Dialog -->
       <v-dialog v-model="dialog" max-width="800px">
         <v-card>
-          <v-card-title class="headline text-center pt-5"></v-card-title>
+          <v-card-title class="headline text-center pt-5">Application Form</v-card-title>
           <v-card-text>
-            <!-- Pass the selected job ID to the ApplicationView -->
-            <ApplicationView v-if="selectedJobId" :jobId="selectedJobId" />
+            <ApplicationView
+              v-if="selectedJobId"
+              :jobId="selectedJobId"
+              @application-submitted="handleApplicationSubmitted"
+            />
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -692,7 +703,7 @@ const filteredJobs = computed(() => {
         <v-card>
           <v-card-title class="headline text-center pt-5">Notifications</v-card-title>
           <v-card-text>
-            <NotificationComponent />
+            <NotificationComponent :notifications="notifications" />
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -873,6 +884,10 @@ const filteredJobs = computed(() => {
 
 .navigation-menu a:hover {
   background-color: #00796b;
+}
+
+.text-capitalize {
+  text-transform: capitalize !important;
 }
 
 .icon {

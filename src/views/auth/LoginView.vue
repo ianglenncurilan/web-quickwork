@@ -224,7 +224,7 @@ function handleLogin() {
   align-items: center; /* Center vertically */
   background-color: #328e6e; /* Ribbon background color */
   color: white;
-  padding: 0.5rem 2rem;
+  padding: 0rem 2rem;
   border-radius: 5px 5px 0 0; /* Rounded top corners */
   text-align: center;
   font-weight: bold;

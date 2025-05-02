@@ -312,6 +312,11 @@ function handleReviewSubmitted(reviewData) {
     submitReview(selectedJobId.value, reviewData)
   }
 }
+
+// Method to handle application submission
+function handleApplicationSubmitted(applicationData) {
+  console.log('Application submitted:', applicationData)
+}
 </script>
 
 <template>
@@ -612,7 +617,12 @@ function handleReviewSubmitted(reviewData) {
           <v-card-title class="headline text-center pt-5"></v-card-title>
           <v-card-text>
             <!-- Pass the selected job ID to the ApplicationView -->
-            <ApplicationView v-if="selectedJobId" :jobId="selectedJobId" />
+            <ApplicationView
+              v-if="selectedJobId"
+              :jobId="selectedJobId"
+              :jobs="jobs"
+              @application-submitted="handleApplicationSubmitted"
+            />
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>

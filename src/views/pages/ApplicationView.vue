@@ -1,15 +1,19 @@
 <script setup>
-import { ref, reactive } from 'vue'
-import { defineProps, defineEmits } from 'vue'
+import { ref, reactive } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
   jobId: {
     type: String,
     required: true,
   },
-})
+  jobs: {
+    type: Array,
+    required: true, // Ensure the jobs array is passed as a prop
+  },
+});
 
-const emit = defineEmits(['application-submitted'])
+const emit = defineEmits(['application-submitted']);
 
 // Form state management
 const formState = reactive({
@@ -27,7 +31,7 @@ const formState = reactive({
   coverLetter: null,
   references: [{ name: '', relationship: '', contact: '' }],
   agreement: false,
-})
+});
 
 // Form validation state
 const errors = reactive({
@@ -36,13 +40,14 @@ const errors = reactive({
   email: '',
   phone: '',
   agreement: '',
-})
+  resume: '',
+});
 
 // UI state
-const isSubmitting = ref(false)
-const isSubmitted = ref(false)
-const formStep = ref(1)
-const totalSteps = 3
+const isSubmitting = ref(false);
+const isSubmitted = ref(false);
+const formStep = ref(1);
+const totalSteps = 3;
 
 // Available positions
 const positions = [
@@ -54,7 +59,7 @@ const positions = [
   'Sales Representative',
   'Data Analyst',
   'Other',
-]
+];
 
 // Education options
 const educationOptions = [
@@ -64,174 +69,189 @@ const educationOptions = [
   "Master's Degree",
   'PhD',
   'Other',
-]
+];
 
 // Handle file upload
 const handleFileUpload = (event, field) => {
-  const file = event.target.files[0]
+  const file = event.target.files[0];
   if (file) {
-    formState[field] = file
+    formState[field] = file;
+    errors[field] = ''; // Clear any previous errors
   }
-}
+};
 
 // Add reference
 const addReference = () => {
-  formState.references.push({ name: '', relationship: '', contact: '' })
-}
+  formState.references.push({ name: '', relationship: '', contact: '' });
+};
 
 // Remove reference
 const removeReference = (index) => {
-  formState.references.splice(index, 1)
-}
+  formState.references.splice(index, 1);
+};
 
 // Move to next step
 const nextStep = () => {
   if (validateStep(formStep.value)) {
-    formStep.value++
+    formStep.value++;
+    clearErrors(); // Clear errors when moving to the next step
   }
-}
+};
 
 // Move to previous step
 const prevStep = () => {
-  formStep.value--
-}
+  formStep.value--;
+};
 
 // Validate current step
 const validateStep = (step) => {
-  let isValid = true
+  let isValid = true;
 
   if (step === 1) {
     // Validate personal info
     if (!formState.firstName.trim()) {
-      errors.firstName = 'First name is required'
-      isValid = false
+      errors.firstName = 'First name is required';
+      isValid = false;
     } else {
-      errors.firstName = ''
+      errors.firstName = '';
     }
 
     if (!formState.lastName.trim()) {
-      errors.lastName = 'Last name is required'
-      isValid = false
+      errors.lastName = 'Last name is required';
+      isValid = false;
     } else {
-      errors.lastName = ''
+      errors.lastName = '';
     }
 
     if (!formState.email.trim()) {
-      errors.email = 'Email is required'
-      isValid = false
+      errors.email = 'Email is required';
+      isValid = false;
     } else if (!/^\S+@\S+\.\S+$/.test(formState.email)) {
-      errors.email = 'Please enter a valid email'
-      isValid = false
+      errors.email = 'Please enter a valid email';
+      isValid = false;
     } else {
-      errors.email = ''
+      errors.email = '';
     }
 
     if (formState.phone && !/^[0-9]{10}$/.test(formState.phone.replace(/\D/g, ''))) {
-      errors.phone = 'Please enter a valid phone number'
-      isValid = false
+      errors.phone = 'Please enter a valid phone number';
+      isValid = false;
     } else {
-      errors.phone = ''
+      errors.phone = '';
     }
   }
 
-  return isValid
-}
-
-// Get jobs from localStorage to find the current job
-const getJobById = (jobId) => {
-  try {
-    const storedJobs = localStorage.getItem('huntjobs-job-listings')
-    const jobs = storedJobs ? JSON.parse(storedJobs) : []
-    return jobs.find(job => job.id.toString() === jobId.toString())
-  } catch (error) {
-    console.error('Error finding job:', error)
-    return null
+  if (step === 2) {
+    // Validate resume upload
+    if (!formState.resume) {
+      errors.resume = 'Resume is required';
+      isValid = false;
+    } else {
+      errors.resume = '';
+    }
   }
-}
+
+  return isValid;
+};
+
+// Clear validation errors
+const clearErrors = () => {
+  Object.keys(errors).forEach((key) => {
+    errors[key] = '';
+  });
+};
 
 // Submit form
-const submitForm = () => {
-  const finalValidation = validateStep(formStep.value)
+const submitForm = async () => {
+  const finalValidation = validateStep(formStep.value);
 
   if (!formState.agreement) {
-    errors.agreement = 'You must agree to the terms'
-    return
+    errors.agreement = 'You must agree to the terms';
+    return;
   } else {
-    errors.agreement = ''
+    errors.agreement = '';
   }
 
   if (finalValidation) {
-    isSubmitting.value = true
+    isSubmitting.value = true;
 
     // Generate application ID
-    const applicationId = Math.random().toString(36).substring(2, 10).toUpperCase()
-
-    // Get the current job data
-    const jobData = getJobById(props.jobId)
+    const applicationId = Math.random().toString(36).substring(2, 10).toUpperCase();
 
     // Create application data object
     const applicationData = {
       id: applicationId,
       jobId: props.jobId,
       timestamp: new Date().toISOString(),
-      ...formState
-    }
-
-    // Save application to localStorage
-    saveApplication(applicationData)
+      ...formState,
+    };
 
     // Emit event to parent for notification
-    emit('application-submitted', {
-      application: applicationData,
-      job: jobData
-    })
+    emit('application-submitted', applicationData);
 
-    // Simulate API call
-    setTimeout(() => {
-      isSubmitting.value = false
-      isSubmitted.value = true
-      console.log('Form submitted:', applicationData)
-    }, 1500)
+    // Send email notification to the employer
+    try {
+      const job = props.jobs.find((job) => job.id === props.jobId); // Find the job details
+      if (!job) {
+        console.error('Job not found for the given jobId:', props.jobId);
+        return;
+      }
+
+      const employerEmail = job.employerEmail || 'default-employer@example.com'; // Replace with actual employer email field
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTION_URL}/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          employerEmail,
+          applicantName: `${formState.firstName} ${formState.lastName}`,
+          applicantEmail: formState.email,
+          jobTitle: job.title || 'Unknown Job',
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to send email:', await response.text());
+      } else {
+        console.log('Email sent successfully');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+
+    // Reset form and show success message
+    resetForm();
+    isSubmitting.value = false;
+    isSubmitted.value = true;
   }
-}
+};
 
-// Save application to localStorage
-const saveApplication = (applicationData) => {
-  try {
-    // Get existing applications
-    const storedApplications = localStorage.getItem('huntjobs-applications')
-    const applications = storedApplications ? JSON.parse(storedApplications) : []
-
-    // Add new application
-    applications.push(applicationData)
-
-    // Save back to localStorage
-    localStorage.setItem('huntjobs-applications', JSON.stringify(applications))
-  } catch (error) {
-    console.error('Error saving application:', error)
-  }
-}
-
-// Format phone number
-const formatPhone = (event) => {
-  let phoneNumber = event.target.value.replace(/\D/g, '')
-  if (phoneNumber.length > 10) {
-    phoneNumber = phoneNumber.substr(0, 10)
-  }
-
-  if (phoneNumber.length >= 6) {
-    formState.phone = `(${phoneNumber.substr(0, 3)}) ${phoneNumber.substr(3, 3)}-${phoneNumber.substr(6)}`
-  } else if (phoneNumber.length >= 3) {
-    formState.phone = `(${phoneNumber.substr(0, 3)}) ${phoneNumber.substr(3)}`
-  } else {
-    formState.phone = phoneNumber
-  }
-}
+// Reset form
+const resetForm = () => {
+  Object.keys(formState).forEach((key) => {
+    if (Array.isArray(formState[key])) {
+      formState[key] = key === 'references' ? [{ name: '', relationship: '', contact: '' }] : [];
+    } else if (typeof formState[key] === 'boolean') {
+      formState[key] = false;
+    } else {
+      formState[key] = '';
+    }
+  });
+  formStep.value = 1;
+};
 </script>
 
 <template>
-    <div class="container">
+  <div class="container">
     <div class="form-container">
+      <ApplicationView
+        v-if="selectedJobId"
+        :jobId="selectedJobId"
+        @application-submitted="handleApplicationSubmitted"
+      />
       <div v-if="!isSubmitted">
         <h1>Job Application Form</h1>
         <p>Applying for Job ID: {{ jobId }}</p>
@@ -362,13 +382,15 @@ const formatPhone = (event) => {
           </div>
 
           <div class="form-group">
-            <label for="resume">Resume (PDF or DOC)</label>
+            <label for="resume">Resume (PDF or DOC) <span class="required">*</span></label>
             <input
               type="file"
               id="resume"
               @change="(e) => handleFileUpload(e, 'resume')"
               accept=".pdf,.doc,.docx"
+              :class="{ 'error-input': errors.resume }"
             />
+            <span v-if="errors.resume" class="error">{{ errors.resume }}</span>
           </div>
 
           <div class="form-group">
@@ -527,11 +549,7 @@ const formatPhone = (event) => {
 
           <div class="button-group">
             <button class="btn btn-outline" @click="prevStep">Back</button>
-            <button
-              class="btn btn-primary"
-              @click="submitForm"
-              :disabled="isSubmitting"
-            >
+            <button class="btn btn-primary" @click="submitForm" :disabled="isSubmitting">
               <span v-if="isSubmitting">Submitting...</span>
               <span v-else>Submit Application</span>
             </button>
@@ -544,7 +562,9 @@ const formatPhone = (event) => {
           <v-icon size="64" color="success">mdi-check-circle</v-icon>
         </div>
         <h2>Application Submitted Successfully!</h2>
-        <p>Thank you for your application. We will review your information and get back to you soon.</p>
+        <p>
+          Thank you for your application. We will review your information and get back to you soon.
+        </p>
       </div>
     </div>
   </div>
