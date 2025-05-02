@@ -1,8 +1,8 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
-import ApplicationView from '@/views/pages/ApplicationView.vue'
 import ReviewView from '@/views/pages/ReviewView.vue'
+import ApplyView from '@/views/pages/ApplyView.vue'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase'
@@ -15,6 +15,8 @@ const userData = ref({
   email: '',
   fullname: '',
 })
+
+const emit = defineEmits(['application-submitted']);  
 
 const formAction = ref({
   ...formActionDefault,
@@ -315,7 +317,9 @@ function handleReviewSubmitted(reviewData) {
 
 // Method to handle application submission
 function handleApplicationSubmitted(applicationData) {
-  console.log('Application submitted:', applicationData)
+  console.log('Application submitted from StudentView:', applicationData);
+
+  emit('application-submitted', applicationData);
 }
 </script>
 
@@ -326,49 +330,55 @@ function handleApplicationSubmitted(applicationData) {
         <v-row class="fill-screen" dense>
           <!-- Left Column: Navigation -->
           <v-col cols="3" class="left-column my-5" elevation="3">
-            <v-card class="pa-6 rounded-xl" elevation="3" style="height: 600px;">
-            <!-- Profile Header -->
-            <ProfileHeader />
+            <v-card class="pa-6 rounded-xl" elevation="3" style="height: 600px">
+              <!-- Profile Header -->
+              <ProfileHeader />
 
-            <!-- Navigation Menu -->
-            <nav class="navigation-menu">
-              <ul>
-                <li>
-                  <a href="#" @click="openJobPostForm">
-                    <i class="icon mdi mdi-bell-outline"></i>
-                    <span v-if="!isSidebarCollapsed">Notification</span>
-                  </a>
-                </li>
+              <nav class="navigation-menu">
+                <ul>
+                  <li>
+                    <v-btn
+                      rounded
+                      @click="openJobPostForm"
+                      class="d-flex align-center"
+                      variant="text"
+                    >
+                      <i class="icon mdi mdi-plus-circle-outline" style="margin-right: 10px"></i>
+                      <span v-if="!isSidebarCollapsed">Add Job</span>
+                    </v-btn>
+                  </li>
 
-                <li>
-                  <a
-                    href="#"
-                    @click="
-                      () => {
-                        isFormVisible = false
-                      }
-                    "
-                  >
-                    <i class="icon mdi mdi-briefcase-outline"></i>
-                    <span v-if="!isSidebarCollapsed">Job Posted</span>
-                  </a>
-                </li>
+                  <li>
+                    <v-btn
+                      rounded
+                      @click="
+                        () => {
+                          isFormVisible = false
+                        }
+                      "
+                      class="d-flex align-center"
+                      variant="text"
+                    >
+                      <i class="icon mdi mdi-briefcase-outline" style="margin-right: 10px"></i>
+                      <span v-if="!isSidebarCollapsed">Job Posted</span>
+                    </v-btn>
+                  </li>
 
-                <li>
-                  <v-btn
-                    variant="plain"
-                    rounded
-                    @click="onLogout"
-                    :loading="formAction.formProcess"
-                    :disabled="formAction.formProcess"
-                    class="d-flex align-center"
-                  >
-                    <i class="icon mdi mdi-logout" style="margin-right: 10px"></i>
-                    <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
-                  </v-btn>
-                </li>
-              </ul>
-            </nav>
+                  <li>
+                    <v-btn
+                      rounded
+                      @click="onLogout"
+                      :loading="formAction.formProcess"
+                      :disabled="formAction.formProcess"
+                      class="d-flex align-center"
+                      variant="text"
+                    >
+                      <i class="icon mdi mdi-logout" style="margin-right: 10px"></i>
+                      <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
+                    </v-btn>
+                  </li>
+                </ul>
+              </nav>
             </v-card>
           </v-col>
 
@@ -576,25 +586,77 @@ function handleApplicationSubmitted(applicationData) {
               </div>
 
               <!-- Job Reviews View -->
-              <div v-if="displayMode === 'reviews'" class="reviews-container">
-                <h4 class="mb-3">Reviews for {{ selectedJob.title }}</h4>
+              <div v-if="displayMode === 'reviews'" class="reviews-container pa-4">
+                <div class="d-flex align-center mb-4">
+                  <h3 class="text-h5" style="color: black">Reviews for {{ selectedJob.title }}</h3>
+                  <v-div></v-div>
+                  <v-chip
+                    class="ml-3"
+                    color="primary"
+                    variant="outlined"
+                    v-if="jobRatings[selectedJob.id]"
+                  >
+                    {{ jobRatings[selectedJob.id].length }}
+                    {{ jobRatings[selectedJob.id].length === 1 ? 'Review' : 'Reviews' }}
+                  </v-chip>
+                </div>
+
                 <div v-if="jobRatings[selectedJob.id] && jobRatings[selectedJob.id].length > 0">
                   <v-list>
-                    <v-list-item v-for="review in jobRatings[selectedJob.id]" :key="review.id">
-                      <v-card class="pa-3">
-                        <div class="d-flex justify-space-between">
-                          <span>{{ review.username }}</span>
-                          <span>{{ new Date(review.date).toLocaleDateString() }}</span>
-                        </div>
-                        <v-rating :model-value="review.rating" readonly color="amber"></v-rating>
-                        <p>{{ review.comment }}</p>
+                    <v-list-item
+                      v-for="review in jobRatings[selectedJob.id]"
+                      :key="review.id"
+                      class="mb-3 pa-0"
+                    >
+                      <v-card variant="outlined" class="w-100">
+                        <v-card-item>
+                          <template v-slot:prepend>
+                            <v-avatar color="grey-lighten-1" class="text-uppercase">
+                              {{ review.username.charAt(0) }}
+                            </v-avatar>
+                          </template>
+                          <v-card-title class="text-body-1 font-weight-bold">{{
+                            review.username
+                          }}</v-card-title>
+                          <v-card-subtitle>{{
+                            new Date(review.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          }}</v-card-subtitle>
+
+                          <template v-slot:append>
+                            <v-rating
+                              :model-value="review.rating"
+                              readonly
+                              color="amber-darken-2"
+                              density="compact"
+                              size="small"
+                            >
+                            </v-rating>
+                          </template>
+                        </v-card-item>
+
+                        <v-card-text class="pt-2 text-body-1">
+                          {{ review.comment }}
+                        </v-card-text>
                       </v-card>
                     </v-list-item>
                   </v-list>
                 </div>
-                <div v-else>
-                  <p>No reviews yet.</p>
-                </div>
+
+                <v-card v-else variant="outlined" class="pa-6 text-center">
+                  <v-icon
+                    icon="mdi-star-outline"
+                    size="large"
+                    color="grey-lighten-1"
+                    class="mb-2"
+                  ></v-icon>
+                  <p class="text-body-1 text-medium-emphasis mb-0">
+                    No reviews available for this job yet.
+                  </p>
+                </v-card>
               </div>
             </v-card>
 
@@ -614,13 +676,10 @@ function handleApplicationSubmitted(applicationData) {
       <!-- Application Dialog -->
       <v-dialog v-model="dialog" max-width="800px">
         <v-card>
-          <v-card-title class="headline text-center pt-5"></v-card-title>
           <v-card-text>
-            <!-- Pass the selected job ID to the ApplicationView -->
-            <ApplicationView
+            <ApplyView
               v-if="selectedJobId"
               :jobId="selectedJobId"
-              :jobs="jobs"
               @application-submitted="handleApplicationSubmitted"
             />
           </v-card-text>

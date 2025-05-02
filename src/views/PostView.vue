@@ -1,8 +1,8 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProfileHeader from '@/components/layout/commons/ProfileHeader.vue'
-import ApplicationView from '@/views/pages/ApplicationView.vue'
 import ReviewView from '@/views/pages/ReviewView.vue'
+import ApplyView from '@/views/pages/ApplyView.vue' // Added missing import
 import NotificationComponent from '@/components/layout/commons/NotificationComponent.vue'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -12,10 +12,6 @@ import { getAvatarText } from '@/utils/helpers'
 const router = useRouter()
 
 const notificationDialog = ref(false) // Controls the visibility of the notification dialog
-
-function openNotificationDialog() {
-  notificationDialog.value = true
-}
 
 const userData = ref({
   initials: '',
@@ -70,11 +66,13 @@ onMounted(() => {
   getUser()
   loadJobsFromStorage()
   loadRatingsFromStorage() // Load reviews/ratings when component mounts
+  loadApplicationsFromStorage() // Add this line
 })
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings'
 const RATINGS_STORAGE_KEY = 'huntjobs-job-ratings'
+const APPLICATIONS_STORAGE_KEY = 'huntjobs-job-applications'
 
 // Form state
 const jobForm = ref({
@@ -93,6 +91,40 @@ const jobs = ref([])
 // Ratings list
 const jobRatings = ref({})
 
+// Applications list
+const applicationData = ref({})
+
+// Handle application submission
+function handleApplicationSubmitted(newApplication) {
+  // Ensure jobId exists in application data
+  if (!applicationData.value[newApplication.jobId]) {
+    applicationData.value[newApplication.jobId] = []
+  }
+
+  // Add timestamp if not present
+  if (!newApplication.timestamp) {
+    newApplication.timestamp = new Date().toISOString()
+  }
+
+  // Add a unique ID for the application if not present
+  if (!newApplication.id) {
+    newApplication.id = Date.now()
+  }
+
+  // Add the application to the job's applications
+  applicationData.value[newApplication.jobId].push(newApplication)
+
+  // Close the application dialog
+  dialog.value = false
+
+  // If we're viewing the job that just received an application, update display
+  if (selectedJob.value && selectedJob.value.id === newApplication.jobId) {
+    displayMode.value = 'appliedForms'
+  }
+
+  console.log('Application submitted:', newApplication)
+}
+
 // Edit mode
 const isEditing = ref(false)
 const editingJobId = ref(null)
@@ -101,7 +133,7 @@ const selectedJob = ref(null)
 const searchQuery = ref('')
 
 // Display mode for right panel
-const displayMode = ref('details') // 'details' or 'reviews'
+const displayMode = ref('details') // 'details', 'reviews', or 'appliedForms'
 
 // Sidebar collapse state
 const isSidebarCollapsed = ref(false)
@@ -149,6 +181,22 @@ function saveRatingsToStorage() {
   localStorage.setItem(RATINGS_STORAGE_KEY, JSON.stringify(jobRatings.value))
 }
 
+// Load applications from localStorage
+function loadApplicationsFromStorage() {
+  try {
+    const stored = localStorage.getItem(APPLICATIONS_STORAGE_KEY)
+    applicationData.value = stored ? JSON.parse(stored) : {}
+  } catch (err) {
+    console.error('Failed to load applications from localStorage:', err)
+    applicationData.value = {}
+  }
+}
+
+// Save applications to localStorage
+function saveApplicationsToStorage() {
+  localStorage.setItem(APPLICATIONS_STORAGE_KEY, JSON.stringify(applicationData.value))
+}
+
 // Watch jobs and update localStorage
 watch(
   jobs,
@@ -163,6 +211,15 @@ watch(
   jobRatings,
   () => {
     saveRatingsToStorage()
+  },
+  { deep: true },
+)
+
+// Watch applications and update localStorage
+watch(
+  applicationData,
+  () => {
+    saveApplicationsToStorage()
   },
   { deep: true },
 )
@@ -255,9 +312,23 @@ function showJobReviews(job) {
   displayMode.value = 'reviews' // Show reviews when this function is called
 }
 
+// Show job applications
+function showJobApplications(job) {
+  selectedJob.value = job // Set the selected job
+  displayMode.value = 'appliedForms' // Switch to "appliedForms" mode
+}
+
+// Added missing function that was referenced in the template
+function handleJobTitleClick(jobId) {
+  const job = jobs.value.find((j) => j.id === jobId)
+  if (job) {
+    showJobDetails(job)
+  }
+}
+
 // Toggle between details and reviews
 function toggleDisplayMode(mode) {
-  if (mode === 'details' || mode === 'reviews') {
+  if (['details', 'reviews', 'appliedForms'].includes(mode)) {
     displayMode.value = mode // Set the display mode explicitly
   } else {
     // Toggle between 'details' and 'reviews' if no mode is provided
@@ -314,12 +385,6 @@ function handleReviewSubmitted(reviewData) {
   }
 }
 
-// Handle application submission
-function handleApplicationSubmitted(applicationData) {
-  notifications.value.push(applicationData)
-  notificationDialog.value = true // Open the notification dialog
-}
-
 // Filtered jobs based on search
 const filteredJobs = computed(() => {
   const searchText = searchQuery.value.toLowerCase()
@@ -329,6 +394,15 @@ const filteredJobs = computed(() => {
     ),
   )
 })
+
+// Format date helper function
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
 </script>
 
 <template>
@@ -349,32 +423,30 @@ const filteredJobs = computed(() => {
                 <ul>
                   <li>
                     <v-btn
-
-                      class="rounded-pill px-8 py-2 text-capitalize"
-                      elevation="2"
-                      @click="openNotificationDialog"
+                      rounded
+                      @click="openJobPostForm"
+                      class="d-flex align-center"
+                      variant="text"
                     >
-                      Notifications
+                      <i class="icon mdi mdi-plus-circle-outline" style="margin-right: 10px"></i>
+                      <span v-if="!isSidebarCollapsed">Add Job</span>
                     </v-btn>
                   </li>
+
                   <li>
-                    <a href="#" @click="openJobPostForm">
-                      <i class="icon mdi mdi-plus-circle-outline"></i>
-                      <span v-if="!isSidebarCollapsed">Add Job</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
+                    <v-btn
+                      rounded
                       @click="
                         () => {
                           isFormVisible = false
                         }
                       "
+                      class="d-flex align-center"
+                      variant="text"
                     >
-                      <i class="icon mdi mdi-briefcase-outline"></i>
+                      <i class="icon mdi mdi-briefcase-outline" style="margin-right: 10px"></i>
                       <span v-if="!isSidebarCollapsed">Job Posted</span>
-                    </a>
+                    </v-btn>
                   </li>
 
                   <li>
@@ -384,6 +456,7 @@ const filteredJobs = computed(() => {
                       :loading="formAction.formProcess"
                       :disabled="formAction.formProcess"
                       class="d-flex align-center"
+                      variant="text"
                     >
                       <i class="icon mdi mdi-logout" style="margin-right: 10px"></i>
                       <span v-if="!isSidebarCollapsed" class="text-red">Logout</span>
@@ -547,6 +620,14 @@ const filteredJobs = computed(() => {
                         >
                           Reviews
                         </v-btn>
+                        <v-btn
+                          color="green"
+                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2 mt-2"
+                          elevation="2"
+                          @click.stop="showJobApplications(job)"
+                        >
+                          Applied Forms
+                        </v-btn>
                       </v-col>
                     </v-row>
                   </v-card>
@@ -555,7 +636,7 @@ const filteredJobs = computed(() => {
             </v-container>
           </v-col>
 
-          <!-- Right Column: Job Details / Reviews -->
+          <!-- Right Column: Job Details / Reviews / Applications -->
           <v-col cols="3" class="right-column">
             <!-- Toggle buttons for details/reviews -->
             <div v-if="selectedJob" class="d-flex justify-space-between mb-4">
@@ -572,6 +653,13 @@ const filteredJobs = computed(() => {
                 @click="toggleDisplayMode('reviews')"
               >
                 Reviews
+              </v-btn>
+              <v-btn
+                :color="displayMode === 'appliedForms' ? 'success' : 'grey'"
+                class="flex-grow-1 ml-2"
+                @click="toggleDisplayMode('appliedForms')"
+              >
+                Applied Forms
               </v-btn>
             </div>
 
@@ -625,25 +713,103 @@ const filteredJobs = computed(() => {
                 </v-card-text>
               </div>
 
-              <!-- Job Reviews View -->
+              <!-- Reviews View -->
               <div v-if="displayMode === 'reviews'" class="reviews-container">
-                <h4 class="mb-3">Reviews for {{ selectedJob.title }}</h4>
+                <h4 class="text-h5 font-weight-medium mb-4">Reviews for {{ selectedJob.title }}</h4>
+
                 <div v-if="jobRatings[selectedJob.id] && jobRatings[selectedJob.id].length > 0">
-                  <v-list>
-                    <v-list-item v-for="review in jobRatings[selectedJob.id]" :key="review.id">
-                      <v-card class="pa-3">
-                        <div class="d-flex justify-space-between">
-                          <span>{{ review.username }}</span>
-                          <span>{{ new Date(review.date).toLocaleDateString() }}</span>
+                  <v-list lines="one">
+                    <v-list-item
+                      v-for="review in jobRatings[selectedJob.id]"
+                      :key="review.id"
+                      class="pa-0 mb-3"
+                    >
+                      <v-card class="pa-4" elevation="2">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                          <span class="font-weight-medium">{{ review.username }}</span>
+                          <span class="text-caption text-grey-darken-1">{{
+                            new Date(review.date).toLocaleDateString()
+                          }}</span>
                         </div>
-                        <v-rating :model-value="review.rating" readonly color="amber"></v-rating>
-                        <p>{{ review.comment }}</p>
+                        <v-rating
+                          :model-value="review.rating"
+                          readonly
+                          color="amber"
+                          size="small"
+                          class="mb-2"
+                        ></v-rating>
+                        <p class="text-body-2 text-grey-darken-2">{{ review.comment }}</p>
                       </v-card>
                     </v-list-item>
                   </v-list>
                 </div>
                 <div v-else>
-                  <p>No reviews yet.</p>
+                  <p class="text-body-2 text-grey">No reviews yet.</p>
+                </div>
+              </div>
+
+              <!-- Job Applications Details -->
+              <div v-if="displayMode === 'appliedForms'" class="applications-container">
+                <h2 class="form-title">Job Applications</h2>
+
+                <div
+                  v-if="
+                    applicationData[selectedJob.id] && applicationData[selectedJob.id].length > 0
+                  "
+                  class="applications-list"
+                >
+                  <div
+                    v-for="application in applicationData[selectedJob.id]"
+                    :key="application.id"
+                    class="application-card"
+                  >
+                    <div class="application-header">
+                      <div class="applicant-name">
+                        {{ application.firstName }} {{ application.lastName }}
+                      </div>
+                      <div class="application-date">{{ formatDate(application.timestamp) }}</div>
+                    </div>
+
+                    <div class="application-details">
+                      <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">{{ application.email }}</span>
+                      </div>
+
+                      <div class="detail-row">
+                        <span class="detail-label">Phone:</span>
+                        <span class="detail-value">{{ application.phone || 'Not provided' }}</span>
+                      </div>
+
+                      <div v-if="application.address" class="detail-row">
+                        <span class="detail-label">Address:</span>
+                        <span class="detail-value">
+                          {{ application.address }}
+                          {{ application.city ? `, ${application.city}` : '' }}
+                          {{ application.state ? `, ${application.state}` : '' }}
+                          {{ application.zipCode ? ` ${application.zipCode}` : '' }}
+                        </span>
+                      </div>
+
+                      <div v-if="application.position" class="detail-row">
+                        <span class="detail-label">Position:</span>
+                        <span class="detail-value">{{ application.position }}</span>
+                      </div>
+
+                      <div v-if="application.education" class="detail-row">
+                        <span class="detail-label">Education:</span>
+                        <span class="detail-value">{{ application.education }}</span>
+                      </div>
+                    </div>
+
+                    <div class="application-actions">
+                      <button class="contact-button">Contact Applicant</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="no-applications">
+                  <p>No applications have been submitted for this job yet.</p>
                 </div>
               </div>
             </v-card>
@@ -664,11 +830,12 @@ const filteredJobs = computed(() => {
       <!-- Application Dialog -->
       <v-dialog v-model="dialog" max-width="800px">
         <v-card>
-          <v-card-title class="headline text-center pt-5">Application Form</v-card-title>
+          <v-card-title class="headline text-center pt-5">Job Application</v-card-title>
           <v-card-text>
-            <ApplicationView
+            <ApplyView
               v-if="selectedJobId"
               :jobId="selectedJobId"
+              :applications="applicationData"
               @application-submitted="handleApplicationSubmitted"
             />
           </v-card-text>

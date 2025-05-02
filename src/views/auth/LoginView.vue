@@ -141,7 +141,7 @@ function handleLogin() {
                   variant="outlined"
                   required
                   :rules="[requiredValidator, passwordValidator]"
-                  append-inner-icon="mdi-eye"
+                  :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                   @click:append-inner="showPassword = !showPassword"
                 ></v-text-field>
 
