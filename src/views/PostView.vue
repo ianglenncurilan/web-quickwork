@@ -69,14 +69,13 @@ onMounted(() => {
   getUser()
   loadJobsFromStorage()
   loadRatingsFromStorage() // Load reviews/ratings when component mounts
-  loadApplicationsFromStorage() // Add this line
-  loadApplicationsFromStorage()
+  loadApplicationsFromStorage() // Load applications when component mounts
 })
 
 // Constants
 const STORAGE_KEY = 'huntjobs-job-listings'
 const RATINGS_STORAGE_KEY = 'huntjobs-job-ratings'
-const APPLICATIONS_STORAGE_KEY = 'huntjobs-job-applications'
+const STORAGE_KEY_APPLICATIONS = 'huntjobs-applications'
 
 // Form state
 const jobForm = ref({
@@ -96,7 +95,7 @@ const jobs = ref([])
 const jobRatings = ref({})
 
 // Applications list
-const applicationData = ref({})
+const applicationData = ref({}) // Stores applications for each job
 
 // Handle application submission
 function handleApplicationSubmitted(application) {
@@ -115,6 +114,9 @@ function handleApplicationSubmitted(application) {
   // Add the application to the job's applications
   applicationData.value[application.jobId].push(applicationWithTimestamp)
 
+  // Save to localStorage
+  saveApplicationsToStorage()
+
   // Emit the application-submitted event
   emit('application-submitted', applicationWithTimestamp)
 
@@ -126,11 +128,7 @@ function handleApplicationSubmitted(application) {
   dialog.value = false
 }
 
-// Open the ApplyView dialog
-function applyForJob(job) {
-  selectedJobId.value = job.id // Set the selected job ID
-  dialog.value = true // Open the application dialog
-}
+
 
 // Edit mode
 const isEditing = ref(false)
@@ -207,7 +205,7 @@ function saveRatingsToStorage() {
 // Load applications from localStorage
 function loadApplicationsFromStorage() {
   try {
-    const stored = localStorage.getItem(APPLICATIONS_STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS)
     applicationData.value = stored ? JSON.parse(stored) : {}
   } catch (err) {
     console.error('Failed to load applications from localStorage:', err)
@@ -217,7 +215,7 @@ function loadApplicationsFromStorage() {
 
 // Save applications to localStorage
 function saveApplicationsToStorage() {
-  localStorage.setItem(APPLICATIONS_STORAGE_KEY, JSON.stringify(applicationData.value))
+  localStorage.setItem(STORAGE_KEY_APPLICATIONS, JSON.stringify(applicationData.value))
 }
 
 // Watch jobs and update localStorage
@@ -430,7 +428,7 @@ const formatDate = (dateString) => {
           <!-- Left Column: Navigation -->
 
           <v-col cols="3" class="left-column my-5">
-            <v-card class="pa-6 rounded-xl" elevation="3">
+            <v-card class="pa-6 rounded-xl" elevation="3" style="height: 575px">
               <!-- Profile Header -->
               <ProfileHeader />
 
@@ -485,7 +483,7 @@ const formatDate = (dateString) => {
           </v-col>
 
           <!-- Middle Column: Search + Jobs + Form -->
-          <v-col cols="6" class="scrollable-column">
+          <v-col cols="5" class="scrollable-column">
             <div class="search-container">
               <div class="search-box">
                 <input
@@ -647,14 +645,7 @@ const formatDate = (dateString) => {
                           Applied Forms
                         </v-btn>
                         <!-- Apply Now Button -->
-                        <v-btn
-                          color="teal-darken-2"
-                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2 mt-2"
-                          elevation="2"
-                          @click.stop="applyForJob(job)"
-                        >
-                          Apply Now
-                        </v-btn>
+
                       </v-col>
                     </v-row>
                   </v-card>
@@ -664,9 +655,9 @@ const formatDate = (dateString) => {
           </v-col>
 
           <!-- Right Column: Job Details / Reviews / Applications -->
-          <v-col cols="3" class="right-column">
+          <v-col cols="4" class="right-column">
             <!-- Toggle buttons for details/reviews -->
-            <div v-if="selectedJob" class="d-flex justify-space-between mb-4">
+            <div v-if="selectedJob" class="top-right-col d-flex justify-space-between mb-4">
               <v-btn
                 :color="displayMode === 'details' ? 'success' : 'grey'"
                 class="flex-grow-1 mr-2"
@@ -886,7 +877,6 @@ const formatDate = (dateString) => {
                               <span class="font-weight-medium">Education: </span>
                               <span>{{ application.education }}</span>
                             </div>
-
                           </div>
                         </v-card-text>
 
@@ -1280,5 +1270,15 @@ const formatDate = (dateString) => {
 .card-unclick:hover {
   transform: scale(1.05); /* Slightly enlarge on hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a stronger shadow on hover */
+}
+
+.right-column {
+  max-height: 100vh; /* Set the maximum height to the viewport height */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding-right: 12px; /* Optional: Add padding for better spacing */
+}
+
+.top-right-col{
+  padding-right: 12px;
 }
 </style>

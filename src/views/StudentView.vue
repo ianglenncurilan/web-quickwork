@@ -89,7 +89,7 @@ const jobs = ref([])
 const jobRatings = ref({})
 
 // Application data
-const applicationData = ref({})
+const applicationData = ref({}) // Stores applications for each job
 
 // Edit mode
 const isEditing = ref(false)
@@ -252,13 +252,6 @@ function showJobDetails(job) {
   displayMode.value = 'details' // Show details by default when clicking a job
 }
 
-// Handle the "Applied Forms" button click
-function showJobApplications(job) {
-  selectedJob.value = job // Set the selected job
-  selectedJobId.value = job.id // Set the selected job ID
-  displayMode.value = 'appliedForms' // Switch to the "Applied Forms" view
-}
-
 // Show job reviews
 function showJobReviews(job) {
   selectedJob.value = job
@@ -338,6 +331,9 @@ function handleApplicationSubmitted(application) {
 
   // Add the application to the job's applications
   applicationData.value[application.jobId].push(applicationWithTimestamp)
+
+  // Save to localStorage
+  saveApplicationsToStorage()
 
   // Emit the application-submitted event
   emit('application-submitted', applicationWithTimestamp)
@@ -456,7 +452,7 @@ function contactApplicant(application) {
           </v-col>
 
           <!-- Middle Column: Search + Jobs + Form -->
-          <v-col cols="6" class="scrollable-column">
+          <v-col cols="5" class="scrollable-column">
             <div class="search-container">
               <div class="search-box">
                 <input
@@ -608,14 +604,6 @@ function contactApplicant(application) {
                         >
                           Rate This
                         </v-btn>
-                        <v-btn
-                          color="green"
-                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2 mt-2"
-                          elevation="2"
-                          @click.stop="showJobApplications(job)"
-                        >
-                          Applied Forms
-                        </v-btn>
 
                         <!-- Apply Now Button -->
                         <v-btn
@@ -635,7 +623,7 @@ function contactApplicant(application) {
           </v-col>
 
           <!-- Right Column: Job Details / Reviews / Applied Forms -->
-          <v-col cols="3" class="right-column">
+          <v-col cols="4" class="right-column">
             <!-- Toggle buttons for details/reviews/applied forms -->
             <div class="d-flex justify-space-between mb-4">
               <v-btn
@@ -651,13 +639,6 @@ function contactApplicant(application) {
                 @click="toggleDisplayMode('reviews')"
               >
                 Reviews
-              </v-btn>
-              <v-btn
-                :color="displayMode === 'appliedForms' ? 'success' : 'grey'"
-                class="flex-grow-1 ml-2"
-                @click="toggleDisplayMode('appliedForms')"
-              >
-                Applied Forms
               </v-btn>
             </div>
 
@@ -854,7 +835,6 @@ function contactApplicant(application) {
                               <span class="font-weight-medium">Education: </span>
                               <span>{{ application.education }}</span>
                             </div>
-                       
                           </div>
                         </v-card-text>
 
@@ -1222,5 +1202,11 @@ function contactApplicant(application) {
 .card-unclick:hover {
   transform: scale(1.05); /* Slightly enlarge on hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a stronger shadow on hover */
+}
+
+.right-column {
+  max-height: 100vh; /* Set the maximum height to the viewport height */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding-right: 12px; /* Optional: Add padding for better spacing */
 }
 </style>
