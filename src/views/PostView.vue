@@ -10,6 +10,8 @@ import { supabase, formActionDefault } from '@/utils/supabase'
 import { getAvatarText } from '@/utils/helpers'
 import FormDialog from '@/views/pages/FormDialog.vue'
 
+const emit = defineEmits(['application-submitted'])
+
 const router = useRouter()
 
 const notificationDialog = ref(false) // Controls the visibility of the notification dialog
@@ -68,6 +70,7 @@ onMounted(() => {
   loadJobsFromStorage()
   loadRatingsFromStorage() // Load reviews/ratings when component mounts
   loadApplicationsFromStorage() // Add this line
+  loadApplicationsFromStorage()
 })
 
 // Constants
@@ -96,34 +99,37 @@ const jobRatings = ref({})
 const applicationData = ref({})
 
 // Handle application submission
-function handleApplicationSubmitted(newApplication) {
-  // Ensure jobId exists in application data
-  if (!applicationData.value[newApplication.jobId]) {
-    applicationData.value[newApplication.jobId] = []
+function handleApplicationSubmitted(application) {
+  // Add a timestamp to the application data
+  const applicationWithTimestamp = {
+    ...application,
+    timestamp: new Date().toISOString(),
+    id: Date.now(), // Ensure each application has a unique ID
   }
 
-  // Add timestamp if not present
-  if (!newApplication.timestamp) {
-    newApplication.timestamp = new Date().toISOString()
-  }
-
-  // Add a unique ID for the application if not present
-  if (!newApplication.id) {
-    newApplication.id = Date.now()
+  // Ensure the jobId property exists in applicationData
+  if (!applicationData.value[application.jobId]) {
+    applicationData.value[application.jobId] = []
   }
 
   // Add the application to the job's applications
-  applicationData.value[newApplication.jobId].push(newApplication)
+  applicationData.value[application.jobId].push(applicationWithTimestamp)
 
-  // Close the application dialog
+  // Emit the application-submitted event
+  emit('application-submitted', applicationWithTimestamp)
+
+  // Update the display mode to show "Applied Forms"
+  selectedJob.value = jobs.value.find((job) => job.id === application.jobId)
+  displayMode.value = 'appliedForms'
+
+  // Close the dialog after submission
   dialog.value = false
+}
 
-  // If we're viewing the job that just received an application, update display
-  if (selectedJob.value && selectedJob.value.id === newApplication.jobId) {
-    displayMode.value = 'appliedForms'
-  }
-
-  console.log('Application submitted:', newApplication)
+// Open the ApplyView dialog
+function applyForJob(job) {
+  selectedJobId.value = job.id // Set the selected job ID
+  dialog.value = true // Open the application dialog
 }
 
 // Edit mode
@@ -149,8 +155,9 @@ const selectedJobId = ref(null) // Tracks the job ID for the selected job
 
 // Handle the "Applied Forms" button click
 function showJobApplications(job) {
+  selectedJob.value = job // Set the selected job
   selectedJobId.value = job.id // Set the selected job ID
-  formDialogVisible.value = true // Open the FormDialog
+  displayMode.value = 'appliedForms' // Switch to the "Applied Forms" view
 }
 
 // Handle the form-viewed event
@@ -639,6 +646,15 @@ const formatDate = (dateString) => {
                         >
                           Applied Forms
                         </v-btn>
+                        <!-- Apply Now Button -->
+                        <v-btn
+                          color="teal-darken-2"
+                          class="rounded-pill px-6 py-0 text-white text-capitalize mb-2 mt-2"
+                          elevation="2"
+                          @click.stop="applyForJob(job)"
+                        >
+                          Apply Now
+                        </v-btn>
                       </v-col>
                     </v-row>
                   </v-card>
@@ -724,104 +740,181 @@ const formatDate = (dateString) => {
                 </v-card-text>
               </div>
 
-              <!-- Reviews View -->
-              <div v-if="displayMode === 'reviews'" class="reviews-container">
-                <h4 class="text-h5 font-weight-medium mb-4">Reviews for {{ selectedJob.title }}</h4>
+              <!-- Job Reviews View -->
+              <div v-if="displayMode === 'reviews'" class="reviews-container pa-4">
+                <div class="d-flex align-center mb-4">
+                  <h5 class="text-h5" style="color: black">Reviews for {{ selectedJob.title }}</h5>
+                  <v-div></v-div>
+                  <v-chip
+                    class="ml-3"
+                    color="primary"
+                    variant="outlined"
+                    v-if="jobRatings[selectedJob.id]"
+                  >
+                    {{ jobRatings[selectedJob.id].length }}
+                    {{ jobRatings[selectedJob.id].length === 1 ? 'Review' : 'Reviews' }}
+                  </v-chip>
+                </div>
 
                 <div v-if="jobRatings[selectedJob.id] && jobRatings[selectedJob.id].length > 0">
-                  <v-list lines="one">
+                  <v-list>
                     <v-list-item
                       v-for="review in jobRatings[selectedJob.id]"
                       :key="review.id"
-                      class="pa-0 mb-3"
+                      class="mb-3 pa-0"
                     >
-                      <v-card class="pa-4" elevation="2">
-                        <div class="d-flex justify-space-between align-center mb-2">
-                          <span class="font-weight-medium">{{ review.username }}</span>
-                          <span class="text-caption text-grey-darken-1">{{
-                            new Date(review.date).toLocaleDateString()
-                          }}</span>
-                        </div>
-                        <v-rating
-                          :model-value="review.rating"
-                          readonly
-                          color="amber"
-                          size="small"
-                          class="mb-2"
-                        ></v-rating>
-                        <p class="text-body-2 text-grey-darken-2">{{ review.comment }}</p>
+                      <v-card variant="outlined" class="w-100">
+                        <v-card-item>
+                          <template v-slot:prepend>
+                            <v-avatar color="grey-lighten-1" class="text-uppercase">
+                              {{ review.username.charAt(0) }}
+                            </v-avatar>
+                          </template>
+                          <v-card-title class="text-body-1 font-weight-bold">{{
+                            review.username
+                          }}</v-card-title>
+                          <v-card-subtitle>{{
+                            new Date(review.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          }}</v-card-subtitle>
+
+                          <template v-slot:append>
+                            <v-rating
+                              :model-value="review.rating"
+                              readonly
+                              color="amber-darken-2"
+                              density="compact"
+                              size="small"
+                            >
+                            </v-rating>
+                          </template>
+                        </v-card-item>
+
+                        <v-card-text class="pt-2 text-body-1">
+                          {{ review.comment }}
+                        </v-card-text>
                       </v-card>
                     </v-list-item>
                   </v-list>
                 </div>
-                <div v-else>
-                  <p class="text-body-2 text-grey">No reviews yet.</p>
-                </div>
+
+                <v-card v-else variant="outlined" class="pa-6 text-center">
+                  <v-icon
+                    icon="mdi-star-outline"
+                    size="large"
+                    color="grey-lighten-1"
+                    class="mb-2"
+                  ></v-icon>
+                  <p class="text-body-1 text-medium-emphasis mb-0">
+                    No reviews available for this job yet.
+                  </p>
+                </v-card>
               </div>
 
               <!-- Job Applications Details -->
-              <div v-if="displayMode === 'appliedForms'" class="applications-container">
-                <h2 class="form-title">Job Applications</h2>
+              <div v-if="displayMode === 'appliedForms'" class="applications-container pa-4">
+                <h5 class="text-h5" style="color: black">
+                  Applications for {{ selectedJob.title }}
+                </h5>
+                <v-chip
+                  class="ml-3"
+                  color="primary"
+                  variant="outlined"
+                  v-if="applicationData[selectedJob.id]"
+                >
+                  {{ applicationData[selectedJob.id] ? applicationData[selectedJob.id].length : 0 }}
+                  {{
+                    applicationData[selectedJob.id] && applicationData[selectedJob.id].length === 1
+                      ? 'Application'
+                      : 'Applications'
+                  }}
+                </v-chip>
 
                 <div
                   v-if="
                     applicationData[selectedJob.id] && applicationData[selectedJob.id].length > 0
                   "
-                  class="applications-list"
                 >
-                  <div
-                    v-for="application in applicationData[selectedJob.id]"
-                    :key="application.id"
-                    class="application-card"
-                  >
-                    <div class="application-header">
-                      <div class="applicant-name">
-                        {{ application.firstName }} {{ application.lastName }}
-                      </div>
-                      <div class="application-date">{{ formatDate(application.timestamp) }}</div>
-                    </div>
+                  <v-list>
+                    <v-list-item
+                      v-for="application in applicationData[selectedJob.id]"
+                      :key="application.id || application.timestamp"
+                      class="mb-3 pa-0"
+                    >
+                      <v-card variant="outlined" class="w-100">
+                        <v-card-item>
+                          <template v-slot:prepend>
+                            <v-avatar color="grey-lighten-1" class="text-uppercase">
+                              {{ application.firstName ? application.firstName.charAt(0) : 'A' }}
+                            </v-avatar>
+                          </template>
+                          <v-card-title class="text-body-1 font-weight-bold">
+                            {{ application.firstName }} {{ application.lastName }}
+                          </v-card-title>
+                          <v-card-subtitle>
+                            {{ formatDate(application.timestamp || Date.now()) }}
+                          </v-card-subtitle>
+                        </v-card-item>
 
-                    <div class="application-details">
-                      <div class="detail-row">
-                        <span class="detail-label">Email:</span>
-                        <span class="detail-value">{{ application.email }}</span>
-                      </div>
+                        <v-card-text class="pt-2">
+                          <div class="d-flex flex-column">
+                            <div class="mb-2">
+                              <span class="font-weight-medium">Email: </span>
+                              <span>{{ application.email }}</span>
+                            </div>
+                            <div class="mb-2" v-if="application.phone">
+                              <span class="font-weight-medium">Phone: </span>
+                              <span>{{ application.phone }}</span>
+                            </div>
+                            <div class="mb-2" v-if="application.address">
+                              <span class="font-weight-medium">Address: </span>
+                              <span>
+                                {{ application.address }}
+                                {{ application.city ? `, ${application.city}` : '' }}
+                                {{ application.state ? `, ${application.state}` : '' }}
+                                {{ application.zipCode ? ` ${application.zipCode}` : '' }}
+                              </span>
+                            </div>
+                            <div class="mb-2" v-if="application.position">
+                              <span class="font-weight-medium">Position: </span>
+                              <span>{{ application.position }}</span>
+                            </div>
+                            <div class="mb-2" v-if="application.education">
+                              <span class="font-weight-medium">Education: </span>
+                              <span>{{ application.education }}</span>
+                            </div>
 
-                      <div class="detail-row">
-                        <span class="detail-label">Phone:</span>
-                        <span class="detail-value">{{ application.phone || 'Not provided' }}</span>
-                      </div>
+                          </div>
+                        </v-card-text>
 
-                      <div v-if="application.address" class="detail-row">
-                        <span class="detail-label">Address:</span>
-                        <span class="detail-value">
-                          {{ application.address }}
-                          {{ application.city ? `, ${application.city}` : '' }}
-                          {{ application.state ? `, ${application.state}` : '' }}
-                          {{ application.zipCode ? ` ${application.zipCode}` : '' }}
-                        </span>
-                      </div>
-
-                      <div v-if="application.position" class="detail-row">
-                        <span class="detail-label">Position:</span>
-                        <span class="detail-value">{{ application.position }}</span>
-                      </div>
-
-                      <div v-if="application.education" class="detail-row">
-                        <span class="detail-label">Education:</span>
-                        <span class="detail-value">{{ application.education }}</span>
-                      </div>
-                    </div>
-
-                    <div class="application-actions">
-                      <button class="contact-button">Contact Applicant</button>
-                    </div>
-                  </div>
+                        <v-card-actions>
+                          <v-btn
+                            color="primary"
+                            variant="text"
+                            @click="contactApplicant(application)"
+                          >
+                            Contact Applicant
+                          </v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-list-item>
+                  </v-list>
                 </div>
 
-                <div v-else class="no-applications">
-                  <p>No applications have been submitted for this job yet.</p>
-                </div>
+                <v-card v-else variant="outlined" class="pa-6 text-center">
+                  <v-icon
+                    icon="mdi-account-outline"
+                    size="large"
+                    color="grey-lighten-1"
+                    class="mb-2"
+                  ></v-icon>
+                  <p class="text-body-1 text-medium-emphasis mb-0">
+                    No applications available for this job yet.
+                  </p>
+                </v-card>
               </div>
             </v-card>
 
@@ -846,8 +939,8 @@ const formatDate = (dateString) => {
             <ApplyView
               v-if="selectedJobId"
               :jobId="selectedJobId"
-              :applications="applicationData"
               @application-submitted="handleApplicationSubmitted"
+              @close-dialog="dialog = false"
             />
           </v-card-text>
           <v-card-actions>

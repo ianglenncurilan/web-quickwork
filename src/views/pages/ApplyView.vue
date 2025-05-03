@@ -13,7 +13,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['application-submitted'])
+const emit = defineEmits(['application-submitted', 'close-dialog'])
 
 // Computed property to get applications for this specific job
 const jobApplications = computed(() => {
@@ -49,31 +49,55 @@ const formState = reactive({
 })
 
 const isSubmitting = ref(false)
+const submissionSuccess = ref(false) // Tracks if the submission was successful
 
 // Submit application
 function submitApplication() {
-  // Gather form data
-  const applicationData = {
-    jobId: props.jobId,
-    firstName: formState.firstName,
-    lastName: formState.lastName,
-    email: formState.email,
-    phone: formState.phone,
-    address: formState.address,
-    city: formState.city,
-    state: formState.state,
-    zipCode: formState.zipCode,
-    position: formState.position,
-    education: formState.education,
-    id: Date.now(),
-    timestamp: new Date().toISOString(),
+  if (!formState.agreement) {
+    alert('You must agree to the terms and conditions.')
+    return
   }
 
-  // Emit the data to parent component
-  emit('application-submitted', applicationData)
+  console.log('Submitting application:', formState) // Debugging log
 
-  // Reset form
-  resetForm()
+  isSubmitting.value = true
+
+  // Simulate form submission
+  setTimeout(() => {
+    const applicationData = {
+      jobId: props.jobId,
+      firstName: formState.firstName,
+      lastName: formState.lastName,
+      email: formState.email,
+      phone: formState.phone,
+      address: formState.address,
+      city: formState.city,
+      state: formState.state,
+      zipCode: formState.zipCode,
+      position: formState.position,
+      education: formState.education,
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+    }
+
+    console.log('Application data to emit:', applicationData) // Debugging log
+
+    // Emit the data to parent component
+    emit('application-submitted', applicationData)
+
+    // Reset form and show success message
+    resetForm()
+    isSubmitting.value = false
+    submissionSuccess.value = true // Set success state to true
+
+    // Automatically hide the success message after a few seconds
+    setTimeout(() => {
+      submissionSuccess.value = false
+
+      // Close the dialog after submission
+      emit('close-dialog') // Emit an event to close the dialog
+    }, 1000)
+  }, 1000)
 }
 
 // Reset form
@@ -140,7 +164,16 @@ function resetForm() {
 
   <div class="application-form">
     <h2>Apply for Job</h2>
-    <form @submit.prevent="submitApplication">
+
+    <!-- Success Message -->
+    <div v-if="submissionSuccess" class="success-message">
+      <v-alert type="success" dismissible>
+        Your application has been submitted successfully!
+      </v-alert>
+    </div>
+
+    <!-- Application Form -->
+    <form v-else @submit.prevent="submitApplication">
       <div class="form-group">
         <label for="firstName">First Name</label>
         <input v-model="formState.firstName" type="text" id="firstName" required />
@@ -183,7 +216,7 @@ function resetForm() {
       </div>
       <div class="form-group">
         <label>
-          <input v-model="formState.agreement" type="checkbox" />
+          <input v-model="formState.agreement" type="checkbox" required />
           I agree to the terms and conditions
         </label>
       </div>
@@ -194,7 +227,8 @@ function resetForm() {
     </form>
   </div>
 
-  <v-dialog v-model="dialog" max-width="800px">
+  <!-- Application Dialog -->
+  <v-dialog v-model="dialog" max-width="500px">
     <v-card>
       <v-card-title class="headline text-center pt-5">Job Application</v-card-title>
       <v-card-text>
@@ -202,6 +236,7 @@ function resetForm() {
           v-if="selectedJobId"
           :jobId="selectedJobId"
           @application-submitted="handleApplicationSubmitted"
+          @close-dialog="dialog = false"
         />
       </v-card-text>
       <v-card-actions>
@@ -315,38 +350,43 @@ function resetForm() {
 }
 
 .application-form {
-  margin-top: 2rem;
-  padding: 1rem;
+  margin-top: 1.5rem;
+  padding: 0.75rem;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   background: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-width: 400px; /* Limit the width of the form */
+  margin-left: auto; /* Center the form horizontally */
+  margin-right: auto; /* Center the form horizontally */
 }
 
 .application-form h2 {
-  font-size: 1.5rem;
+  font-size: 1.25rem; /* Reduce the font size */
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   text-align: center;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem; /* Reduce spacing between form groups */
 }
 
 .form-group label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem; /* Reduce spacing between label and input */
+  font-size: 0.9rem; /* Reduce label font size */
 }
 
 .form-group input[type='text'],
 .form-group input[type='email'],
 .form-group input[type='tel'] {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.4rem; /* Reduce padding inside inputs */
   border: 1px solid #ccc;
   border-radius: 4px;
+  font-size: 0.9rem; /* Reduce input font size */
 }
 
 .form-group input[type='checkbox'] {
@@ -357,10 +397,11 @@ button[type='submit'] {
   background-color: #007bff;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.75rem; /* Reduce button padding */
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 0.9rem; /* Reduce button font size */
   transition: background-color 0.2s;
 }
 
@@ -371,5 +412,16 @@ button[type='submit']:hover {
 button[type='submit']:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+.success-message {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9rem; /* Reduce success message font size */
 }
 </style>
