@@ -28,7 +28,7 @@ function scrollToSection(id) {
         <v-btn class="text-white" @click="scrollToSection('home')"> Home </v-btn>
         <v-btn class="text-white" @click="scrollToSection('feature')"> Feature </v-btn>
         <v-btn class="text-white" @click="scrollToSection('about')"> About </v-btn>
-        <v-btn class="text-white" @click="scrollToSection('faqs')"> FAQ </v-btn>
+        <v-btn class="text-white" @click="scrollToSection('faqs')"" style="margin-right: 15px;"> FAQ </v-btn>
 
       </v-app-bar>
 
