@@ -350,16 +350,23 @@ const filteredJobs = computed(() => {
 
 // Get average rating for a job
 const getAverageRating = (jobId) => {
-  const ratings = jobRatings.value[jobId] || []
-  if (ratings.length === 0) return 0
+  if (!jobRatings.value['all_ratings']) return 0
+  
+  // Filter ratings for this specific job
+  const jobSpecificRatings = jobRatings.value['all_ratings'].filter(rating => rating.job_id === jobId)
+  if (jobSpecificRatings.length === 0) return 0
 
-  const sum = ratings.reduce((total, rating) => total + rating.rating, 0)
-  return (sum / ratings.length).toFixed(1)
+  // Calculate the average
+  const sum = jobSpecificRatings.reduce((total, rating) => total + rating.rating, 0)
+  return (sum / jobSpecificRatings.length).toFixed(1)
 }
 
 // Get reviews count for a job
 const getReviewsCount = (jobId) => {
-  return (jobRatings.value[jobId] || []).length
+  if (!jobRatings.value['all_ratings']) return 0
+  
+  // Count ratings for this specific job
+  return jobRatings.value['all_ratings'].filter(rating => rating.job_id === jobId).length
 }
 
 // Apply for job
@@ -513,11 +520,15 @@ async function submitReview(jobId, review) {
       jobRatings.value[defaultKey] = []
     }
     
+    // Add the rating to the all_ratings array with the job_id
     jobRatings.value[defaultKey].push({
-      id: data[0].id || Date.now(),
+      id: data[0]?.id || Date.now(),
       rating: review.rating,
-      comment: review.comment
-      // Only using properties that exist in the ratings table
+      comment: review.comment,
+      job_id: numericJobId, // Include job_id for filtering in getAverageRating
+      user_id: userId,
+      username: userData?.user?.email ? userData.user.email.split('@')[0] : 'Anonymous',
+      date: new Date().toISOString()
     })
     
     // Close the rating dialog
