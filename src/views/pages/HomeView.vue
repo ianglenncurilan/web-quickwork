@@ -30,13 +30,6 @@ function scrollToSection(id) {
         <v-btn class="text-white" @click="scrollToSection('about')"> About </v-btn>
         <v-btn class="text-white" @click="scrollToSection('faqs')"> FAQ </v-btn>
 
-        <v-btn icon>
-          <v-icon>mdi-heart</v-icon>
-        </v-btn>
-
-        <v-btn icon>
-          <v-icon>mdi-dots-vertical</v-icon>
-        </v-btn>
       </v-app-bar>
 
 
