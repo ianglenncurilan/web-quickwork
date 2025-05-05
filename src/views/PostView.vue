@@ -98,34 +98,88 @@ const jobRatings = ref({})
 const applicationData = ref({}) // Stores applications for each job
 
 // Handle application submission
-function handleApplicationSubmitted(application) {
-  // Add a timestamp to the application data
-  const applicationWithTimestamp = {
-    ...application,
-    timestamp: new Date().toISOString(),
-    id: Date.now(), // Ensure each application has a unique ID
+async function handleApplicationSubmitted(application) {
+  try {
+    formAction.value.formProcess = true // Show loading state
+    
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    
+    if (!userId) {
+      alert('You must be logged in to submit an application')
+      formAction.value.formProcess = false
+      return
+    }
+    
+    // Make sure jobId is a number
+    const numericJobId = typeof application.jobId === 'string' ? parseInt(application.jobId, 10) : application.jobId
+    console.log('Submitting application for job ID:', numericJobId)
+    
+    // Add a timestamp to the application data
+    const applicationWithTimestamp = {
+      ...application,
+      timestamp: new Date().toISOString(),
+      id: Date.now(), // Ensure each application has a unique ID
+    }
+    
+    // Save application to Supabase
+    const { data, error } = await supabase
+      .from('applications')
+      .insert([
+        {
+          user_id: userId,
+          job_id: numericJobId,
+          name: application.name,
+          email: application.email,
+          phone: application.phone,
+          resume: application.resume,
+          coverletter: application.coverletter
+        }
+      ])
+      .select()
+    
+    if (error) {
+      console.error('Error saving application to Supabase:', error)
+      alert(`Error saving application: ${error.message}`)
+      return
+    }
+    
+    console.log('Application saved to Supabase:', data)
+    
+    // Also update local state for immediate UI feedback
+    // Ensure the jobId property exists in applicationData
+    if (!applicationData.value[numericJobId]) {
+      applicationData.value[numericJobId] = []
+    }
+    
+    // Add the application to the job's applications
+    applicationData.value[numericJobId].push({
+      id: data[0]?.id || Date.now(),
+      name: application.name,
+      email: application.email,
+      phone: application.phone,
+      resume: application.resume,
+      coverletter: application.coverletter,
+      user_id: userId,
+      timestamp: new Date().toISOString()
+    })
+    
+    // Emit the application-submitted event
+    emit('application-submitted', applicationWithTimestamp)
+    
+    // Update the display mode to show "Applied Forms"
+    selectedJob.value = jobs.value.find((job) => job.id === numericJobId)
+    displayMode.value = 'appliedForms'
+    
+    // Close the dialog after submission
+    dialog.value = false
+  } catch (err) {
+    console.error('Error in handleApplicationSubmitted:', err)
+    alert('An error occurred while submitting your application. Please try again.')
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
-
-  // Ensure the jobId property exists in applicationData
-  if (!applicationData.value[application.jobId]) {
-    applicationData.value[application.jobId] = []
-  }
-
-  // Add the application to the job's applications
-  applicationData.value[application.jobId].push(applicationWithTimestamp)
-
-  // Save to localStorage
-  saveApplicationsToStorage()
-
-  // Emit the application-submitted event
-  emit('application-submitted', applicationWithTimestamp)
-
-  // Update the display mode to show "Applied Forms"
-  selectedJob.value = jobs.value.find((job) => job.id === application.jobId)
-  displayMode.value = 'appliedForms'
-
-  // Close the dialog after submission
-  dialog.value = false
 }
 
 
@@ -174,26 +228,109 @@ function closeJobPostForm() {
   isFormVisible.value = false // Hide the job form
 }
 
-// Load jobs from localStorage
-function loadJobsFromStorage() {
+// Load jobs from Supabase
+async function loadJobsFromStorage() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    const parsed = stored ? JSON.parse(stored) : []
-    jobs.value = Array.isArray(parsed) ? parsed : []
+    formAction.value.formProcess = true // Show loading state
+    
+    // Fetch jobs from Supabase
+    const { data, error } = await supabase
+      .from('job_posts')
+      .select('*')
+      .order('posted_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching jobs from Supabase:', error)
+      throw error
+    }
+    
+    // Transform Supabase data to match the format used in the UI
+    jobs.value = data.map(job => ({
+      id: job.id,
+      title: job.job_name || '',
+      description: job.job_description || '',
+      type: job.job_type || '',
+      rate: job.monthly_rate !== null ? job.monthly_rate.toString() : '',
+      link: job.job_link || '',
+      imageUrl: job.imageurl || 'https://via.placeholder.com/300x200',
+      company: job.company || 'Company Name', // Default if not available
+      userId: job.user_id
+    }))
+    
+    console.log('Loaded jobs from Supabase:', jobs.value)
   } catch (err) {
-    console.error('Failed to load jobs from localStorage:', err)
+    console.error('Failed to load jobs from Supabase:', err)
     jobs.value = []
+    
+    // Fallback to localStorage if Supabase fails
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : []
+      jobs.value = Array.isArray(parsed) ? parsed : []
+    } catch (localErr) {
+      console.error('Failed to load jobs from localStorage fallback:', localErr)
+    }
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 
-// Load ratings from localStorage
-function loadRatingsFromStorage() {
+// Load ratings from Supabase
+async function loadRatingsFromStorage() {
   try {
-    const stored = localStorage.getItem(RATINGS_STORAGE_KEY)
-    jobRatings.value = stored ? JSON.parse(stored) : {}
-  } catch (err) {
-    console.error('Failed to load ratings from localStorage:', err)
+    formAction.value.formProcess = true // Show loading state
+    
+    // Fetch ratings from Supabase
+    const { data, error } = await supabase
+      .from('ratings')
+      .select('*')
+      .order('rated_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching ratings from Supabase:', error)
+      throw error
+    }
+    
+    console.log('Ratings loaded from Supabase:', data)
+    
+    // Transform Supabase data to match the format used in the UI
+    // Group ratings by job_id
     jobRatings.value = {}
+    
+    if (data && data.length > 0) {
+      // Group ratings by job_id
+      data.forEach(rating => {
+        const jobId = rating.job_id
+        
+        if (!jobRatings.value[jobId]) {
+          jobRatings.value[jobId] = []
+        }
+        
+        jobRatings.value[jobId].push({
+          id: rating.id,
+          rating: rating.rating || 0,
+          comment: rating.comment || '',
+          username: 'User', // Will be updated with actual username if available
+          date: new Date(rating.rated_at * 1000).toISOString(),
+          userId: rating.user_id
+        })
+      })
+    }
+    
+    console.log('Processed ratings:', jobRatings.value)
+  } catch (err) {
+    console.error('Failed to load ratings from Supabase:', err)
+    
+    // Fallback to localStorage if Supabase fails
+    try {
+      const stored = localStorage.getItem(RATINGS_STORAGE_KEY)
+      jobRatings.value = stored ? JSON.parse(stored) : {}
+    } catch (localErr) {
+      console.error('Failed to load ratings from localStorage fallback:', localErr)
+      jobRatings.value = {}
+    }
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 
@@ -202,14 +339,72 @@ function saveRatingsToStorage() {
   localStorage.setItem(RATINGS_STORAGE_KEY, JSON.stringify(jobRatings.value))
 }
 
-// Load applications from localStorage
-function loadApplicationsFromStorage() {
+// Load applications from Supabase
+async function loadApplicationsFromStorage() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS)
-    applicationData.value = stored ? JSON.parse(stored) : {}
-  } catch (err) {
-    console.error('Failed to load applications from localStorage:', err)
+    formAction.value.formProcess = true // Show loading state
+    
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    
+    if (!userId) {
+      console.log('User not logged in, cannot load applications')
+      applicationData.value = {}
+      return
+    }
+    
+    // Fetch applications from Supabase
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*')
+    
+    if (error) {
+      console.error('Error fetching applications from Supabase:', error)
+      throw error
+    }
+    
+    console.log('Applications loaded from Supabase:', data)
+    
+    // Transform Supabase data to match the format used in the UI
     applicationData.value = {}
+    
+    if (data && data.length > 0) {
+      // Group applications by job_id
+      data.forEach(app => {
+        // Use job_id as key if available, otherwise use a default key
+        const key = app.job_id || 'default'
+        
+        if (!applicationData.value[key]) {
+          applicationData.value[key] = []
+        }
+        
+        applicationData.value[key].push({
+          id: app.id,
+          name: app.name || '',
+          email: app.email || '',
+          phone: app.phone || '',
+          resume: app.resume || '',
+          coverletter: app.coverletter || '',
+          user_id: app.user_id
+        })
+      })
+    }
+    
+    console.log('Processed applications:', applicationData.value)
+  } catch (err) {
+    console.error('Failed to load applications from Supabase:', err)
+    
+    // Fallback to localStorage if Supabase fails
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS)
+      applicationData.value = stored ? JSON.parse(stored) : {}
+    } catch (localErr) {
+      console.error('Failed to load applications from localStorage fallback:', localErr)
+      applicationData.value = {}
+    }
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 
@@ -245,20 +440,58 @@ watch(
   { deep: true },
 )
 
-// Upload image
-function handleImageUpload(event) {
+// Upload image to Supabase Storage
+async function handleImageUpload(event) {
   const file = event.target?.files?.[0] || event
-  if (file) {
+  if (!file) return
+  
+  try {
+    formAction.value.formProcess = true // Show loading state
+    
+    // Create a unique filename with timestamp and original extension
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}.${fileExt}`
+    const filePath = `job_images/${fileName}`
+    
+    // Upload the file to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('job-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+    
+    if (error) {
+      console.error('Error uploading image:', error)
+      alert(`Error uploading image: ${error.message}`)
+      return
+    }
+    
+    // Get the public URL for the uploaded file
+    const { data: publicUrlData } = supabase.storage
+      .from('job-images')
+      .getPublicUrl(filePath)
+    
+    // Set the image URL in the form
+    jobForm.value.imageUrl = publicUrlData.publicUrl
+    console.log('Image uploaded successfully:', publicUrlData.publicUrl)
+  } catch (err) {
+    console.error('Error in handleImageUpload:', err)
+    alert('An error occurred while uploading the image. Please try again.')
+    
+    // Fallback to local preview if Supabase upload fails
     const reader = new FileReader()
     reader.onload = (e) => {
       jobForm.value.imageUrl = e.target.result
     }
     reader.readAsDataURL(file)
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 
 // Post or update job
-function postJob() {
+async function postJob() {
   // Validate form fields
   if (
     !jobForm.value.title.trim() ||
@@ -272,38 +505,107 @@ function postJob() {
     return
   }
 
-  if (isEditing.value && editingJobId.value !== null) {
-    // Update existing job
-    const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
-    if (index !== -1) {
-      jobs.value[index] = {
-        ...jobs.value[index],
-        ...jobForm.value,
+  formAction.value.formProcess = true // Show loading state
+
+  try {
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+
+    if (!userId) {
+      alert('You must be logged in to post a job')
+      formAction.value.formProcess = false
+      return
+    }
+
+    if (isEditing.value && editingJobId.value !== null) {
+      // Update existing job in Supabase
+      const { data, error } = await supabase
+        .from('job_posts')
+        .update({
+          job_name: jobForm.value.title,
+          job_description: jobForm.value.description,
+          job_type: jobForm.value.type,
+          monthly_rate: parseInt(jobForm.value.rate),
+          job_link: jobForm.value.link,
+          imageurl: jobForm.value.imageUrl,
+          posted_at: new Date().toISOString()
+        })
+        .eq('id', editingJobId.value)
+        .select()
+
+      if (error) {
+        console.error('Error updating job:', error)
+        alert(`Error updating job: ${error.message}`)
+      } else if (data) {
+        // Update local state
+        const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
+        if (index !== -1) {
+          jobs.value[index] = {
+            ...jobs.value[index],
+            ...jobForm.value,
+          }
+        }
+      }
+      
+      isEditing.value = false // Exit editing mode
+      editingJobId.value = null // Clear the editing job ID
+    } else {
+      // Add new job to Supabase
+      const { data, error } = await supabase
+        .from('job_posts')
+        .insert([
+          {
+            job_name: jobForm.value.title,
+            job_description: jobForm.value.description,
+            job_type: jobForm.value.type,
+            monthly_rate: parseInt(jobForm.value.rate),
+            job_link: jobForm.value.link,
+            imageurl: jobForm.value.imageUrl,
+            user_id: userId,
+            posted_at: new Date().toISOString()
+          }
+        ])
+        .select()
+
+      if (error) {
+        console.error('Error creating job:', error)
+        alert(`Error creating job: ${error.message}`)
+      } else if (data && data.length > 0) {
+        // Add to local state with the correct ID from Supabase
+        const newJob = {
+          id: data[0].id,
+          title: jobForm.value.title,
+          company: jobForm.value.company,
+          imageUrl: jobForm.value.imageUrl,
+          description: jobForm.value.description,
+          type: jobForm.value.type,
+          rate: jobForm.value.rate,
+          link: jobForm.value.link,
+        }
+        jobs.value.unshift(newJob)
+        console.log('Job created successfully:', data[0])
       }
     }
-    isEditing.value = false // Exit editing mode
-    editingJobId.value = null // Clear the editing job ID
-  } else {
-    // Add new job
-    const newJob = {
-      id: Date.now(),
-      ...jobForm.value,
+  } catch (err) {
+    console.error('Error in postJob function:', err)
+    alert('An unexpected error occurred. Please try again.')
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
+    
+    // Reset form
+    jobForm.value = {
+      title: '',
+      company: '',
+      imageUrl: '',
+      description: '',
+      type: '',
+      rate: '',
+      link: '',
     }
-    jobs.value.unshift(newJob)
-  }
 
-  // Reset form
-  jobForm.value = {
-    title: '',
-    company: '',
-    imageUrl: '',
-    description: '',
-    type: '',
-    rate: '',
-    link: '',
+    closeJobPostForm() // Close the job form
   }
-
-  closeJobPostForm() // Close the job form
 }
 
 // Delete job
@@ -366,37 +668,132 @@ const getReviewsCount = (jobId) => {
 }
 
 // Submit a new review/rating
-function submitReview(jobId, review) {
-  if (!jobRatings.value[jobId]) {
-    jobRatings.value[jobId] = []
-  }
-
-  jobRatings.value[jobId].push({
-    id: Date.now(),
-    rating: review.rating,
-    comment: review.comment,
-    username: userData.value.fullname || 'Anonymous',
-    date: new Date().toISOString(),
-  })
-
-  // Close the rating dialog
-  ratingDialog.value = false
-
-  // Update the selected job to show the reviews
-  if (selectedJob.value && selectedJob.value.id === jobId) {
-    // Force the UI to update by explicitly changing display mode to reviews
+async function submitReview(jobId, review) {
+  try {
+    formAction.value.formProcess = true // Show loading state
+    
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    
+    if (!userId) {
+      alert('You must be logged in to submit a rating')
+      formAction.value.formProcess = false
+      return
+    }
+    
+    console.log('Submitting rating for job ID:', jobId)
+    console.log('Rating data:', review)
+    
+    // Make sure jobId is a number
+    const numericJobId = typeof jobId === 'string' ? parseInt(jobId, 10) : jobId
+    
+    // Save rating to Supabase
+    const { data, error } = await supabase
+      .from('ratings')
+      .insert([
+        {
+          user_id: userId,
+          job_id: numericJobId,
+          rating: review.rating,
+          comment: review.comment,
+          rated_at: Math.floor(Date.now() / 1000) // Unix timestamp in seconds
+        }
+      ])
+      .select()
+    
+    if (error) {
+      console.error('Error saving rating to Supabase:', error)
+      alert(`Error saving rating: ${error.message}`)
+      return
+    }
+    
+    console.log('Rating saved to Supabase:', data)
+    
+    // Also update local state for immediate UI feedback
+    if (!jobRatings.value[jobId]) {
+      jobRatings.value[jobId] = []
+    }
+    
+    jobRatings.value[jobId].push({
+      id: data[0].id || Date.now(),
+      rating: review.rating,
+      comment: review.comment,
+      username: userData.value.fullname || 'Anonymous',
+      date: new Date().toISOString(),
+    })
+    
+    // Save to localStorage as backup
+    saveRatingsToStorage()
+    
+    // Close the rating dialog
+    ratingDialog.value = false
+    
+    // Switch to reviews mode to show the newly added review
     displayMode.value = 'reviews'
+  } catch (err) {
+    console.error('Error in submitReview:', err)
+    alert('An error occurred while submitting your review. Please try again.')
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
-
-  // Save the updated ratings
   saveRatingsToStorage()
 }
 
 // Method to receive rating data from the ReviewView component
-function handleReviewSubmitted(reviewData) {
-  // Make sure we have a selected job ID
-  if (selectedJobId.value) {
-    submitReview(selectedJobId.value, reviewData)
+async function handleReviewSubmitted(reviewData) {
+  try {
+    formAction.value.formProcess = true // Show loading state
+    
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    
+    if (!userId) {
+      alert('You must be logged in to submit a rating')
+      formAction.value.formProcess = false
+      return
+    }
+    
+    // Make sure we have a selected job ID
+    if (selectedJobId.value) {
+      // Make sure jobId is a number
+      const numericJobId = typeof selectedJobId.value === 'string' ? 
+        parseInt(selectedJobId.value, 10) : selectedJobId.value
+      
+      console.log('Submitting rating for job ID:', numericJobId)
+      console.log('Rating data:', reviewData)
+      
+      // Save rating to Supabase
+      const { data, error } = await supabase
+        .from('ratings')
+        .insert([
+          {
+            user_id: userId,
+            job_id: numericJobId,
+            rating: reviewData.rating,
+            comment: reviewData.comment,
+            rated_at: Math.floor(Date.now() / 1000) // Unix timestamp in seconds
+          }
+        ])
+        .select()
+      
+      if (error) {
+        console.error('Error saving rating to Supabase:', error)
+        alert(`Error saving rating: ${error.message}`)
+        return
+      }
+      
+      console.log('Rating saved to Supabase:', data)
+      
+      // Also update local state for immediate UI feedback
+      submitReview(numericJobId, reviewData)
+    }
+  } catch (err) {
+    console.error('Error in handleReviewSubmitted:', err)
+    alert('An error occurred while submitting your review. Please try again.')
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 

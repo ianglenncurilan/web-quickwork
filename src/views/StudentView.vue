@@ -71,17 +71,6 @@ const STORAGE_KEY = 'huntjobs-job-listings'
 const RATINGS_STORAGE_KEY = 'huntjobs-job-ratings'
 const STORAGE_KEY_APPLICATIONS = 'huntjobs-applications'
 
-// Form state
-const jobForm = ref({
-  title: '',
-  company: '',
-  imageUrl: '',
-  description: '',
-  type: '',
-  rate: '',
-  link: '',
-})
-
 // Job list
 const jobs = ref([])
 
@@ -91,10 +80,7 @@ const jobRatings = ref({})
 // Application data
 const applicationData = ref({}) // Stores applications for each job
 
-// Edit mode
-const isEditing = ref(false)
-const editingJobId = ref(null)
-const isFormVisible = ref(false) // Track form visibility
+// View state
 const selectedJob = ref(null)
 const searchQuery = ref('')
 
@@ -104,36 +90,109 @@ const displayMode = ref('details') // 'details', 'reviews', or 'appliedForms'
 // Sidebar collapse state
 const isSidebarCollapsed = ref(false)
 
-// Function to open the job post form
-function openJobPostForm() {
-  isFormVisible.value = true // Show the job form
-}
+// These functions have been removed as students shouldn't be able to post jobs
 
-// Function to close the job post form
-function closeJobPostForm() {
-  isFormVisible.value = false // Hide the job form
-}
-
-// Load jobs from localStorage
-function loadJobsFromStorage() {
+// Load jobs from Supabase
+async function loadJobsFromStorage() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    const parsed = stored ? JSON.parse(stored) : []
-    jobs.value = Array.isArray(parsed) ? parsed : []
+    formAction.value.formProcess = true // Show loading state
+    
+    // Fetch jobs from Supabase
+    const { data, error } = await supabase
+      .from('job_posts')
+      .select('*')
+      .order('posted_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching jobs from Supabase:', error)
+      throw error
+    }
+    
+    console.log('Jobs loaded from Supabase:', data)
+    
+    // Transform Supabase data to match the format used in the UI
+    jobs.value = data.map(job => ({
+      id: job.id,
+      title: job.job_name || '',
+      description: job.job_description || '',
+      type: job.job_type || '',
+      rate: job.monthly_rate !== null ? job.monthly_rate.toString() : '',
+      link: job.job_link || '',
+      imageUrl: job.imageurl || 'https://via.placeholder.com/300x200',
+      company: job.company || 'Company Name', // Default if not available
+      userId: job.user_id
+    }))
   } catch (err) {
-    console.error('Failed to load jobs from localStorage:', err)
+    console.error('Failed to load jobs from Supabase:', err)
     jobs.value = []
+    
+    // Fallback to localStorage if Supabase fails
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : []
+      jobs.value = Array.isArray(parsed) ? parsed : []
+    } catch (localErr) {
+      console.error('Failed to load jobs from localStorage fallback:', localErr)
+    }
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 
-// Load ratings from localStorage
-function loadRatingsFromStorage() {
+// Load ratings from Supabase
+async function loadRatingsFromStorage() {
   try {
-    const stored = localStorage.getItem(RATINGS_STORAGE_KEY)
-    jobRatings.value = stored ? JSON.parse(stored) : {}
-  } catch (err) {
-    console.error('Failed to load ratings from localStorage:', err)
+    formAction.value.formProcess = true // Show loading state
+    
+    // Fetch ratings from Supabase
+    const { data, error } = await supabase
+      .from('ratings')
+      .select('*')
+      .order('rated_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching ratings from Supabase:', error)
+      throw error
+    }
+    
+    console.log('Ratings loaded from Supabase:', data)
+    
+    // Transform Supabase data to match the format used in the UI
+    // Group ratings by job_id
     jobRatings.value = {}
+    
+    if (data && data.length > 0) {
+      // Since there's no job_id column, we'll store all ratings in a single array
+      // under a default key
+      const defaultKey = 'all_ratings'
+      jobRatings.value[defaultKey] = []
+      
+      data.forEach(rating => {
+        jobRatings.value[defaultKey].push({
+          id: rating.id,
+          rating: rating.rating || 0,
+          comment: rating.comment || '',
+          username: 'User', // Will be updated with actual username if available
+          date: new Date(rating.rated_at * 1000).toISOString(),
+          userId: rating.user_id
+        })
+      })
+    }
+    
+    console.log('Processed ratings:', jobRatings.value)
+  } catch (err) {
+    console.error('Failed to load ratings from Supabase:', err)
+    
+    // Fallback to localStorage if Supabase fails
+    try {
+      const stored = localStorage.getItem(RATINGS_STORAGE_KEY)
+      jobRatings.value = stored ? JSON.parse(stored) : {}
+    } catch (localErr) {
+      console.error('Failed to load ratings from localStorage fallback:', localErr)
+      jobRatings.value = {}
+    }
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 
@@ -142,14 +201,72 @@ function saveRatingsToStorage() {
   localStorage.setItem(RATINGS_STORAGE_KEY, JSON.stringify(jobRatings.value))
 }
 
-// Load applications from localStorage
-function loadApplicationsFromStorage() {
+// Load applications from Supabase
+async function loadApplicationsFromStorage() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS)
-    applicationData.value = stored ? JSON.parse(stored) : {}
-  } catch (err) {
-    console.error('Failed to load applications from localStorage:', err)
+    formAction.value.formProcess = true // Show loading state
+    
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    
+    if (!userId) {
+      console.log('User not logged in, cannot load applications')
+      applicationData.value = {}
+      return
+    }
+    
+    // Fetch applications from Supabase
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*')
+    
+    if (error) {
+      console.error('Error fetching applications from Supabase:', error)
+      throw error
+    }
+    
+    console.log('Applications loaded from Supabase:', data)
+    
+    // Transform Supabase data to match the format used in the UI
     applicationData.value = {}
+    
+    if (data && data.length > 0) {
+      // Group applications by job_id
+      data.forEach(app => {
+        // Use job_id as key if available, otherwise use a default key
+        const key = app.job_id || 'default'
+        
+        if (!applicationData.value[key]) {
+          applicationData.value[key] = []
+        }
+        
+        applicationData.value[key].push({
+          id: app.id,
+          name: app.name || '',
+          email: app.email || '',
+          phone: app.phone || '',
+          resume: app.resume || '',
+          coverletter: app.coverletter || '',
+          user_id: app.user_id
+        })
+      })
+    }
+    
+    console.log('Processed applications:', applicationData.value)
+  } catch (err) {
+    console.error('Failed to load applications from Supabase:', err)
+    
+    // Fallback to localStorage if Supabase fails
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS)
+      applicationData.value = stored ? JSON.parse(stored) : {}
+    } catch (localErr) {
+      console.error('Failed to load applications from localStorage fallback:', localErr)
+      applicationData.value = {}
+    }
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
 }
 
@@ -185,66 +302,7 @@ watch(
   { deep: true },
 )
 
-// Upload image
-function handleImageUpload(event) {
-  const file = event.target?.files?.[0] || event
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      jobForm.value.imageUrl = e.target.result
-    }
-    reader.readAsDataURL(file)
-  }
-}
-
-// Post or update job
-function postJob() {
-  // Validate form fields
-  if (
-    !jobForm.value.title.trim() ||
-    !jobForm.value.description.trim() ||
-    !jobForm.value.type.trim() ||
-    !jobForm.value.rate.trim() ||
-    !jobForm.value.link.trim() ||
-    !jobForm.value.imageUrl
-  ) {
-    alert('Please complete all fields.')
-    return
-  }
-
-  if (isEditing.value && editingJobId.value !== null) {
-    // Update existing job
-    const index = jobs.value.findIndex((job) => job.id === editingJobId.value)
-    if (index !== -1) {
-      jobs.value[index] = {
-        ...jobs.value[index],
-        ...jobForm.value,
-      }
-    }
-    isEditing.value = false // Exit editing mode
-    editingJobId.value = null // Clear the editing job ID
-  } else {
-    // Add new job
-    const newJob = {
-      id: Date.now(),
-      ...jobForm.value,
-    }
-    jobs.value.unshift(newJob)
-  }
-
-  // Reset form
-  jobForm.value = {
-    title: '',
-    company: '',
-    imageUrl: '',
-    description: '',
-    type: '',
-    rate: '',
-    link: '',
-  }
-
-  closeJobPostForm() // Close the job form
-}
+// These functions have been removed as students shouldn't be able to post jobs
 
 // Show job details
 function showJobDetails(job) {
@@ -316,34 +374,88 @@ function applyForJob(job) {
 }
 
 // Handle application submission
-function handleApplicationSubmitted(application) {
-  // Add a timestamp to the application data
-  const applicationWithTimestamp = {
-    ...application,
-    timestamp: new Date().toISOString(),
-    id: Date.now(), // Ensure each application has a unique ID
+async function handleApplicationSubmitted(application) {
+  try {
+    formAction.value.formProcess = true // Show loading state
+    
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    
+    if (!userId) {
+      alert('You must be logged in to submit an application')
+      formAction.value.formProcess = false
+      return
+    }
+    
+    // Make sure jobId is a number
+    const numericJobId = typeof application.jobId === 'string' ? parseInt(application.jobId, 10) : application.jobId
+    console.log('Submitting application for job ID:', numericJobId)
+    
+    // Add a timestamp to the application data
+    const applicationWithTimestamp = {
+      ...application,
+      timestamp: new Date().toISOString(),
+      id: Date.now(), // Ensure each application has a unique ID
+    }
+    
+    // Save application to Supabase
+    const { data, error } = await supabase
+      .from('applications')
+      .insert([
+        {
+          user_id: userId,
+          job_id: numericJobId,
+          name: application.name,
+          email: application.email,
+          phone: application.phone,
+          resume: application.resume,
+          coverletter: application.coverletter
+        }
+      ])
+      .select()
+    
+    if (error) {
+      console.error('Error saving application to Supabase:', error)
+      alert(`Error saving application: ${error.message}`)
+      return
+    }
+    
+    console.log('Application saved to Supabase:', data)
+    
+    // Also update local state for immediate UI feedback
+    // Ensure the jobId property exists in applicationData
+    if (!applicationData.value[numericJobId]) {
+      applicationData.value[numericJobId] = []
+    }
+    
+    // Add the application to the job's applications
+    applicationData.value[numericJobId].push({
+      id: data[0]?.id || Date.now(),
+      name: application.name,
+      email: application.email,
+      phone: application.phone,
+      resume: application.resume,
+      coverletter: application.coverletter,
+      user_id: userId,
+      timestamp: new Date().toISOString()
+    })
+    
+    // Emit the application-submitted event
+    emit('application-submitted', applicationWithTimestamp)
+    
+    // Update the display mode to show "Applied Forms"
+    selectedJob.value = jobs.value.find((job) => job.id === numericJobId)
+    displayMode.value = 'appliedForms'
+    
+    // Close the dialog after submission
+    dialog.value = false
+  } catch (err) {
+    console.error('Error in handleApplicationSubmitted:', err)
+    alert('An error occurred while submitting your application. Please try again.')
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
-
-  // Ensure the jobId property exists in applicationData
-  if (!applicationData.value[application.jobId]) {
-    applicationData.value[application.jobId] = []
-  }
-
-  // Add the application to the job's applications
-  applicationData.value[application.jobId].push(applicationWithTimestamp)
-
-  // Save to localStorage
-  saveApplicationsToStorage()
-
-  // Emit the application-submitted event
-  emit('application-submitted', applicationWithTimestamp)
-
-  // Update the display mode to show "Applied Forms"
-  selectedJob.value = jobs.value.find((job) => job.id === application.jobId)
-  displayMode.value = 'appliedForms'
-
-  // Close the dialog after submission
-  dialog.value = false
 }
 
 // Dialog controls
@@ -355,27 +467,71 @@ function rateJob(job) {
 }
 
 // Submit a new review/rating
-function submitReview(jobId, review) {
-  if (!jobRatings.value[jobId]) {
-    jobRatings.value[jobId] = []
-  }
-
-  jobRatings.value[jobId].push({
-    id: Date.now(),
-    rating: review.rating,
-    comment: review.comment,
-    username: userData.value.fullname || 'Anonymous',
-    date: new Date().toISOString(),
-  })
-
-  // Update the selected job to show the reviews - IMPORTANT FIX HERE
-  if (selectedJob.value && selectedJob.value.id === jobId) {
-    // Force the UI to update by explicitly changing display mode to reviews
+async function submitReview(jobId, review) {
+  try {
+    formAction.value.formProcess = true // Show loading state
+    
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    
+    if (!userId) {
+      alert('You must be logged in to submit a rating')
+      formAction.value.formProcess = false
+      return
+    }
+    
+    // Make sure jobId is a number
+    const numericJobId = typeof jobId === 'string' ? parseInt(jobId, 10) : jobId
+    console.log('Submitting rating for job ID:', numericJobId)
+    
+    // Save rating to Supabase
+    const { data, error } = await supabase
+      .from('ratings')
+      .insert([
+        {
+          user_id: userId,
+          // Remove job_id as it doesn't exist in the table
+          rating: review.rating,
+          comment: review.comment,
+          rated_at: Math.floor(Date.now() / 1000) // Unix timestamp in seconds
+        }
+      ])
+      .select()
+    
+    if (error) {
+      console.error('Error saving rating to Supabase:', error)
+      alert(`Error saving rating: ${error.message}`)
+      return
+    }
+    
+    console.log('Rating saved to Supabase:', data)
+    
+    // Also update local state for immediate UI feedback
+    const defaultKey = 'all_ratings'
+    if (!jobRatings.value[defaultKey]) {
+      jobRatings.value[defaultKey] = []
+    }
+    
+    jobRatings.value[defaultKey].push({
+      id: data[0].id || Date.now(),
+      rating: review.rating,
+      comment: review.comment
+      // Only using properties that exist in the ratings table
+    })
+    
+    // Close the rating dialog
+    ratingDialog.value = false
+    
+    // Update the display to show the reviews
+    // Since we're no longer using job-specific ratings, we'll just show all ratings
     displayMode.value = 'reviews'
+  } catch (err) {
+    console.error('Error in submitReview:', err)
+    alert('An error occurred while submitting your review. Please try again.')
+  } finally {
+    formAction.value.formProcess = false // Hide loading state
   }
-
-  // Save the updated ratings
-  saveRatingsToStorage()
 }
 
 // Method to receive rating data from the ReviewView component
@@ -405,17 +561,6 @@ function contactApplicant(application) {
 
               <nav class="navigation-menu">
                 <ul>
-                  <li>
-                    <v-btn
-                      rounded
-                      @click="openJobPostForm"
-                      class="d-flex align-center"
-                      variant="text"
-                    >
-                      <i class="icon mdi mdi-plus-circle-outline" style="margin-right: 10px"></i>
-                      <span v-if="!isSidebarCollapsed">Add Job</span>
-                    </v-btn>
-                  </li>
 
                   <li>
                     <v-btn
@@ -466,78 +611,6 @@ function contactApplicant(application) {
                 </button>
               </div>
             </div>
-
-            <!-- Job Form (Middle) -->
-            <v-card v-if="isFormVisible" class="pa-4 mb-6 rounded-xl" elevation="1" flat>
-              <div class="ribbon-container">
-                <h4 class="ribbon-text">Add a Job</h4>
-              </div>
-              <v-btn class="close-btn margin-left" elevation="2" @click="closeJobPostForm">
-                <v-icon color="white">mdi-close</v-icon>
-              </v-btn>
-              <v-divider class="my-4"></v-divider>
-
-              <v-text-field
-                v-model="jobForm.title"
-                clearable
-                label="Job Name"
-                variant="solo-filled"
-                class="mb-4"
-                required
-              />
-              <v-textarea
-                v-model="jobForm.description"
-                clearable
-                label="Job Description"
-                variant="solo-filled"
-                auto-grow
-                rows="3"
-                class="mb-4"
-                required
-              />
-              <v-text-field
-                v-model="jobForm.type"
-                clearable
-                label="Job Type"
-                variant="solo-filled"
-                class="mb-4"
-                required
-              />
-              <v-text-field
-                v-model="jobForm.rate"
-                clearable
-                label="Monthly rate"
-                variant="solo-filled"
-                class="mb-4"
-                required
-              />
-              <v-text-field
-                v-model="jobForm.link"
-                clearable
-                label="Job link"
-                variant="solo-filled"
-                class="mb-6"
-                required
-              />
-              <v-file-input
-                label="Upload Job Image"
-                variant="solo-filled"
-                class="mb-4"
-                @change="handleImageUpload"
-                accept="image/*"
-                prepend-icon="mdi-camera"
-              />
-
-              <v-btn
-                color="teal-darken-2"
-                class="rounded-pill px-6 py-3 text-white text-capitalize"
-                elevation="2"
-                block
-                @click="postJob"
-              >
-                Submit Job
-              </v-btn>
-            </v-card>
 
             <!-- Job Listings -->
             <v-container fluid>
@@ -694,21 +767,21 @@ function contactApplicant(application) {
 
               <!-- Job Reviews View -->
               <div v-if="displayMode === 'reviews'" class="reviews-container pa-4">
-                <h5 class="text-h5" style="color: black">Reviews for {{ selectedJob.title }}</h5>
+                <h5 class="text-h5" style="color: black">All Reviews</h5>
                 <v-chip
                   class="ml-3"
                   color="primary"
                   variant="outlined"
-                  v-if="jobRatings[selectedJob.id]"
+                  v-if="jobRatings['all_ratings']"
                 >
-                  {{ jobRatings[selectedJob.id].length }}
-                  {{ jobRatings[selectedJob.id].length === 1 ? 'Review' : 'Reviews' }}
+                  {{ jobRatings['all_ratings'].length }}
+                  {{ jobRatings['all_ratings'].length === 1 ? 'Review' : 'Reviews' }}
                 </v-chip>
 
-                <div v-if="jobRatings[selectedJob.id] && jobRatings[selectedJob.id].length > 0">
+                <div v-if="jobRatings['all_ratings'] && jobRatings['all_ratings'].length > 0">
                   <v-list>
                     <v-list-item
-                      v-for="review in jobRatings[selectedJob.id]"
+                      v-for="review in jobRatings['all_ratings']"
                       :key="review.id"
                       class="mb-3 pa-0"
                     >
@@ -716,19 +789,19 @@ function contactApplicant(application) {
                         <v-card-item>
                           <template v-slot:prepend>
                             <v-avatar color="grey-lighten-1" class="text-uppercase">
-                              {{ review.username.charAt(0) }}
+                              {{ review.userId ? review.userId.substring(0, 2).toUpperCase() : 'A' }}
                             </v-avatar>
                           </template>
-                          <v-card-title class="text-body-1 font-weight-bold">{{
-                            review.username
-                          }}</v-card-title>
-                          <v-card-subtitle>{{
-                            new Date(review.date).toLocaleDateString('en-US', {
+                          <v-card-title class="text-body-1 font-weight-bold">
+                            Anonymous User
+                          </v-card-title>
+                          <v-card-subtitle>
+                            {{ new Date().toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'short',
                               day: 'numeric',
-                            })
-                          }}</v-card-subtitle>
+                            }) }}
+                          </v-card-subtitle>
 
                           <template v-slot:append>
                             <v-rating

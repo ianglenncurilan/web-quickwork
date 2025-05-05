@@ -21,8 +21,8 @@ const props = defineProps({
   // Add jobId prop to pass to parent
   jobId: {
     type: [Number, String],
-    required: true
-  }
+    required: true,
+  },
 })
 
 const emit = defineEmits(['update:rating', 'review-submitted'])

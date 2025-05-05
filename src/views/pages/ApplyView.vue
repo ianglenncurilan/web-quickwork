@@ -1,23 +1,42 @@
 <script setup>
-import { computed, ref, reactive } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
 import { defineProps, defineEmits } from 'vue'
+import { useApplicationStore } from '@/stores/applicationStore'
+import { useJobPostStore } from '@/stores/jobPostStore'
+import { useUserStore } from '@/stores/userStore'
+import { supabase } from '@/utils/supabase'
 
 const props = defineProps({
   jobId: {
     type: [Number, String],
     required: true,
   },
-  applications: {
-    type: Object,
-    default: () => ({}),
-  },
 })
 
 const emit = defineEmits(['application-submitted', 'close-dialog'])
 
+// Initialize stores
+const applicationStore = useApplicationStore()
+const jobPostStore = useJobPostStore()
+const userStore = useUserStore()
+
+// Load job applications on mount
+onMounted(async () => {
+  // Initialize user authentication
+  await userStore.initializeUser()
+  
+  console.log('User authenticated:', userStore.isAuthenticated)
+  console.log('User ID:', userStore.userId)
+  
+  if (props.jobId) {
+    await applicationStore.fetchJobApplications(props.jobId)
+    await jobPostStore.fetchJobPostById(props.jobId)
+  }
+})
+
 // Computed property to get applications for this specific job
 const jobApplications = computed(() => {
-  return props.applications[props.jobId] || []
+  return applicationStore.applications.filter((app) => app.job_id === props.jobId)
 })
 
 const hasApplications = computed(() => {
@@ -42,9 +61,11 @@ const formState = reactive({
   address: '',
   city: '',
   state: '',
-  zipCode: '',
   position: '',
   education: '',
+  resume: null,
+  // coverLetter field removed
+  references: [],
   agreement: false,
 })
 
@@ -52,20 +73,73 @@ const isSubmitting = ref(false)
 const submissionSuccess = ref(false) // Tracks if the submission was successful
 
 // Submit application
-function submitApplication() {
+async function submitApplication() {
   if (!formState.agreement) {
     alert('You must agree to the terms and conditions.')
     return
   }
 
-  console.log('Submitting application:', formState) // Debugging log
+  // Check if user is authenticated
+  if (!userStore.isAuthenticated) {
+    alert('You must be logged in to submit an application.')
+    return
+  }
 
   isSubmitting.value = true
 
-  // Simulate form submission
-  setTimeout(() => {
+  try {
+    // Check if the user already has an application in the system
+    const { data: existingApplications, error: checkError } = await supabase
+      .from('applications')
+      .select('*')
+      .eq('user_id', userStore.userId)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error('Error checking existing applications:', checkError)
+      throw checkError
+    }
+
+    // If user already has an application, ask if they want to replace it
+    if (existingApplications) {
+      const confirmReplace = confirm(
+        'You already have an application in the system. Submitting a new application will replace your existing one. Do you want to continue?'
+      )
+      
+      if (!confirmReplace) {
+        isSubmitting.value = false
+        return
+      }
+      
+      // Delete the existing application before submitting a new one
+      const { error: deleteError } = await supabase
+        .from('applications')
+        .delete()
+        .eq('user_id', userStore.userId)
+        
+      if (deleteError) {
+        console.error('Error deleting existing application:', deleteError)
+        throw deleteError
+      }
+    }
+    // Log the job ID to debug
+    console.log('Original job ID:', props.jobId);
+    
+    // Convert job ID to a number if it's a string
+    const numericJobId = typeof props.jobId === 'string' ? parseInt(props.jobId, 10) : props.jobId;
+    console.log('Numeric job ID:', numericJobId);
+    
+    // Verify job exists before submission
+    const jobPost = await jobPostStore.fetchJobPostById(numericJobId);
+    
+    if (!jobPost) {
+      throw new Error(`Job with ID ${numericJobId} not found. Please select a valid job.`);
+    }
+    
+    console.log('Found job post:', jobPost);
+    
     const applicationData = {
-      jobId: props.jobId,
+      jobId: jobPost.id, // Use the actual job ID from the database
       firstName: formState.firstName,
       lastName: formState.lastName,
       email: formState.email,
@@ -73,31 +147,39 @@ function submitApplication() {
       address: formState.address,
       city: formState.city,
       state: formState.state,
-      zipCode: formState.zipCode,
       position: formState.position,
       education: formState.education,
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
+      resume: formState.resume,
+      // coverLetter field removed
+      references: formState.references,
+      userId: userStore.userId,
     }
 
-    console.log('Application data to emit:', applicationData) // Debugging log
+    // Submit to Supabase via the store
+    const result = await applicationStore.submitApplication(applicationData)
 
-    // Emit the data to parent component
-    emit('application-submitted', applicationData)
+    if (result) {
+      // Emit the data to parent component
+      emit('application-submitted', result)
 
-    // Reset form and show success message
-    resetForm()
+      // Reset form and show success message
+      resetForm()
+      submissionSuccess.value = true
+
+      // Automatically hide the success message after a few seconds
+      setTimeout(() => {
+        submissionSuccess.value = false
+
+        // Close the dialog after submission
+        emit('close-dialog')
+      }, 2000)
+    }
+  } catch (error) {
+    console.error('Error submitting application:', error)
+    alert('There was an error submitting your application. Please try again.')
+  } finally {
     isSubmitting.value = false
-    submissionSuccess.value = true // Set success state to true
-
-    // Automatically hide the success message after a few seconds
-    setTimeout(() => {
-      submissionSuccess.value = false
-
-      // Close the dialog after submission
-      emit('close-dialog') // Emit an event to close the dialog
-    }, 1000)
-  }, 1000)
+  }
 }
 
 // Reset form
@@ -105,10 +187,23 @@ function resetForm() {
   Object.keys(formState).forEach((key) => {
     if (typeof formState[key] === 'boolean') {
       formState[key] = false
+    } else if (Array.isArray(formState[key])) {
+      formState[key] = []
     } else {
       formState[key] = ''
     }
   })
+}
+
+// Handle resume file upload
+function handleResumeUpload(event) {
+  const file = event.target.files[0]
+  if (file) {
+    // In a real implementation, you would upload this file to Supabase storage
+    // and then store the URL in formState.resume
+    // For now, we'll just store the file name
+    formState.resume = file.name
+  }
 }
 </script>
 
@@ -119,7 +214,7 @@ function resetForm() {
     <div v-if="hasApplications" class="applications-list">
       <div v-for="application in jobApplications" :key="application.id" class="application-card">
         <div class="application-header">
-          <div class="applicant-name">{{ application.firstName }} {{ application.lastName }}</div>
+          <div class="applicant-name">{{ application.first_name }} {{ application.last_name }}</div>
           <div class="application-date">{{ formatDate(application.timestamp) }}</div>
         </div>
 
@@ -140,7 +235,6 @@ function resetForm() {
               {{ application.address }}
               {{ application.city ? `, ${application.city}` : '' }}
               {{ application.state ? `, ${application.state}` : '' }}
-              {{ application.zipCode ? ` ${application.zipCode}` : '' }}
             </span>
           </div>
 
@@ -152,6 +246,13 @@ function resetForm() {
           <div v-if="application.education" class="detail-row">
             <span class="detail-label">Education:</span>
             <span class="detail-value">{{ application.education }}</span>
+          </div>
+
+          <div v-if="application.resume" class="detail-row">
+            <span class="detail-label">Resume:</span>
+            <span class="detail-value">
+              <a :href="application.resume" target="_blank">View Resume</a>
+            </span>
           </div>
         </div>
 
@@ -208,43 +309,37 @@ function resetForm() {
       </div>
       <div class="form-group">
         <label for="position">Position</label>
-        <input v-model="formState.position" type="text" id="position" />
+        <input v-model="formState.position" type="text" id="position" required />
       </div>
       <div class="form-group">
         <label for="education">Education</label>
         <input v-model="formState.education" type="text" id="education" />
       </div>
+
+      <!-- New fields for resume and cover letter -->
       <div class="form-group">
-        <label>
-          <input v-model="formState.agreement" type="checkbox" required />
-          I agree to the terms and conditions
-        </label>
+        <label for="resume">Resume</label>
+        <input type="file" id="resume" @change="handleResumeUpload" accept=".pdf,.doc,.docx" />
+        <small>Upload your resume (PDF, DOC, or DOCX)</small>
       </div>
-      <button type="submit" :disabled="isSubmitting">
-        <span v-if="isSubmitting">Submitting...</span>
-        <span v-else>Submit Application</span>
-      </button>
+
+      <!-- Cover letter field has been removed -->
+
+      <div class="form-group checkbox-group">
+        <input v-model="formState.agreement" type="checkbox" id="agreement" required />
+        <label for="agreement">I agree to the terms and conditions</label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="submit-button" :disabled="isSubmitting">
+          {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+        </button>
+      </div>
     </form>
   </div>
 
-  <!-- Application Dialog -->
-  <v-dialog v-model="dialog" max-width="500px">
-    <v-card>
-      <v-card-title class="headline text-center pt-5">Job Application</v-card-title>
-      <v-card-text>
-        <ApplyView
-          v-if="selectedJobId"
-          :jobId="selectedJobId"
-          @application-submitted="handleApplicationSubmitted"
-          @close-dialog="dialog = false"
-        />
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="red" text @click="dialog = false">Close</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <!-- We've removed the recursive dialog component that was causing issues -->
+  <!-- This component should be used by a parent component instead of trying to include itself -->
 </template>
 
 <style scoped>
