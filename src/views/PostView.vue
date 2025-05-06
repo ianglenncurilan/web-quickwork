@@ -679,7 +679,7 @@ async function submitReview(jobId, review) {
     console.log('Rating data:', review)
 
     // Make sure jobId is a number
-    const numericJobId = typeof jobId === 'string' ? parseInt(jobId, 10) : jobId
+    // const numericJobId = typeof jobId === 'string' ? parseInt(jobId, 10) : jobId
 
     // Save rating to Supabase
     const { data, error } = await supabase
@@ -687,7 +687,7 @@ async function submitReview(jobId, review) {
       .insert([
         {
           user_id: userId,
-          job_id: numericJobId,
+          job_id: jobId,
           rating: review.rating,
           comment: review.comment,
           rated_at: Math.floor(Date.now() / 1000), // Unix timestamp in seconds
@@ -1401,12 +1401,14 @@ const formatDate = (dateString) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #328E6E; /* Same as teal-darken-2 */
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  background-color: #328e6e; /* Same as teal-darken-2 */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
 .close-btn:hover {
-  background-color: #328E6E; /* Slightly lighter teal on hover */
+  background-color: #328e6e; /* Slightly lighter teal on hover */
   transform: scale(1.1); /* Slight zoom effect on hover */
 }
 

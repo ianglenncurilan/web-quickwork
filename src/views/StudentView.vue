@@ -498,7 +498,7 @@ async function submitReview(jobId, review) {
       .insert([
         {
           user_id: userId,
-          // Remove job_id as it doesn't exist in the table
+          job_id: numericJobId, // Add job_id to connect rating with job
           rating: review.rating,
           comment: review.comment,
           rated_at: Math.floor(Date.now() / 1000) // Unix timestamp in seconds
