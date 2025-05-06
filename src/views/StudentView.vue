@@ -96,22 +96,22 @@ const isSidebarCollapsed = ref(false)
 async function loadJobsFromStorage() {
   try {
     formAction.value.formProcess = true // Show loading state
-    
+
     // Fetch jobs from Supabase
     const { data, error } = await supabase
       .from('job_posts')
       .select('*')
       .order('posted_at', { ascending: false })
-    
+
     if (error) {
       console.error('Error fetching jobs from Supabase:', error)
       throw error
     }
-    
+
     console.log('Jobs loaded from Supabase:', data)
-    
+
     // Transform Supabase data to match the format used in the UI
-    jobs.value = data.map(job => ({
+    jobs.value = data.map((job) => ({
       id: job.id,
       title: job.job_name || '',
       description: job.job_description || '',
@@ -120,12 +120,12 @@ async function loadJobsFromStorage() {
       link: job.job_link || '',
       imageUrl: job.imageurl || 'https://via.placeholder.com/300x200',
       company: job.company || 'Company Name', // Default if not available
-      userId: job.user_id
+      userId: job.user_id,
     }))
   } catch (err) {
     console.error('Failed to load jobs from Supabase:', err)
     jobs.value = []
-    
+
     // Fallback to localStorage if Supabase fails
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -143,46 +143,40 @@ async function loadJobsFromStorage() {
 async function loadRatingsFromStorage() {
   try {
     formAction.value.formProcess = true // Show loading state
-    
+
     // Fetch ratings from Supabase
     const { data, error } = await supabase
       .from('ratings')
       .select('*')
       .order('rated_at', { ascending: false })
-    
+
     if (error) {
       console.error('Error fetching ratings from Supabase:', error)
       throw error
     }
-    
+
     console.log('Ratings loaded from Supabase:', data)
-    
-    // Transform Supabase data to match the format used in the UI
-    // Group ratings by job_id
+
     jobRatings.value = {}
-    
     if (data && data.length > 0) {
-      // Since there's no job_id column, we'll store all ratings in a single array
-      // under a default key
-      const defaultKey = 'all_ratings'
-      jobRatings.value[defaultKey] = []
-      
-      data.forEach(rating => {
-        jobRatings.value[defaultKey].push({
+      data.forEach((rating) => {
+        const jobId = rating.job_id
+        if (!jobRatings.value[jobId]) {
+          jobRatings.value[jobId] = []
+        }
+        jobRatings.value[jobId].push({
           id: rating.id,
           rating: rating.rating || 0,
           comment: rating.comment || '',
-          username: 'User', // Will be updated with actual username if available
+          username: 'User', // Or fetch actual username if available
           date: new Date(rating.rated_at * 1000).toISOString(),
-          userId: rating.user_id
+          userId: rating.user_id,
+          job_id: rating.job_id,
         })
       })
     }
-    
-    console.log('Processed ratings:', jobRatings.value)
   } catch (err) {
     console.error('Failed to load ratings from Supabase:', err)
-    
     // Fallback to localStorage if Supabase fails
     try {
       const stored = localStorage.getItem(RATINGS_STORAGE_KEY)
@@ -205,42 +199,40 @@ function saveRatingsToStorage() {
 async function loadApplicationsFromStorage() {
   try {
     formAction.value.formProcess = true // Show loading state
-    
+
     // Get current user
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData?.user?.id
-    
+
     if (!userId) {
       console.log('User not logged in, cannot load applications')
       applicationData.value = {}
       return
     }
-    
+
     // Fetch applications from Supabase
-    const { data, error } = await supabase
-      .from('applications')
-      .select('*')
-    
+    const { data, error } = await supabase.from('applications').select('*')
+
     if (error) {
       console.error('Error fetching applications from Supabase:', error)
       throw error
     }
-    
+
     console.log('Applications loaded from Supabase:', data)
-    
+
     // Transform Supabase data to match the format used in the UI
     applicationData.value = {}
-    
+
     if (data && data.length > 0) {
       // Group applications by job_id
-      data.forEach(app => {
+      data.forEach((app) => {
         // Use job_id as key if available, otherwise use a default key
         const key = app.job_id || 'default'
-        
+
         if (!applicationData.value[key]) {
           applicationData.value[key] = []
         }
-        
+
         applicationData.value[key].push({
           id: app.id,
           name: app.name || '',
@@ -248,15 +240,15 @@ async function loadApplicationsFromStorage() {
           phone: app.phone || '',
           resume: app.resume || '',
           coverletter: app.coverletter || '',
-          user_id: app.user_id
+          user_id: app.user_id,
         })
       })
     }
-    
+
     console.log('Processed applications:', applicationData.value)
   } catch (err) {
     console.error('Failed to load applications from Supabase:', err)
-    
+
     // Fallback to localStorage if Supabase fails
     try {
       const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS)
@@ -350,23 +342,15 @@ const filteredJobs = computed(() => {
 
 // Get average rating for a job
 const getAverageRating = (jobId) => {
-  if (!jobRatings.value['all_ratings']) return 0
-  
-  // Filter ratings for this specific job
-  const jobSpecificRatings = jobRatings.value['all_ratings'].filter(rating => rating.job_id === jobId)
-  if (jobSpecificRatings.length === 0) return 0
-
-  // Calculate the average
-  const sum = jobSpecificRatings.reduce((total, rating) => total + rating.rating, 0)
-  return (sum / jobSpecificRatings.length).toFixed(1)
+  const ratings = jobRatings.value[jobId] || []
+  if (ratings.length === 0) return 0
+  const sum = ratings.reduce((total, rating) => total + rating.rating, 0)
+  return (sum / ratings.length).toFixed(1)
 }
 
 // Get reviews count for a job
 const getReviewsCount = (jobId) => {
-  if (!jobRatings.value['all_ratings']) return 0
-  
-  // Count ratings for this specific job
-  return jobRatings.value['all_ratings'].filter(rating => rating.job_id === jobId).length
+  return (jobRatings.value[jobId] || []).length
 }
 
 // Apply for job
@@ -384,28 +368,29 @@ function applyForJob(job) {
 async function handleApplicationSubmitted(application) {
   try {
     formAction.value.formProcess = true // Show loading state
-    
+
     // Get current user
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData?.user?.id
-    
+
     if (!userId) {
       alert('You must be logged in to submit an application')
       formAction.value.formProcess = false
       return
     }
-    
+
     // Make sure jobId is a number
-    const numericJobId = typeof application.jobId === 'string' ? parseInt(application.jobId, 10) : application.jobId
+    const numericJobId =
+      typeof application.jobId === 'string' ? parseInt(application.jobId, 10) : application.jobId
     console.log('Submitting application for job ID:', numericJobId)
-    
+
     // Add a timestamp to the application data
     const applicationWithTimestamp = {
       ...application,
       timestamp: new Date().toISOString(),
       id: Date.now(), // Ensure each application has a unique ID
     }
-    
+
     // Save application to Supabase
     const { data, error } = await supabase
       .from('applications')
@@ -417,25 +402,25 @@ async function handleApplicationSubmitted(application) {
           email: application.email,
           phone: application.phone,
           resume: application.resume,
-          coverletter: application.coverletter
-        }
+          coverletter: application.coverletter,
+        },
       ])
       .select()
-    
+
     if (error) {
       console.error('Error saving application to Supabase:', error)
       alert(`Error saving application: ${error.message}`)
       return
     }
-    
+
     console.log('Application saved to Supabase:', data)
-    
+
     // Also update local state for immediate UI feedback
     // Ensure the jobId property exists in applicationData
     if (!applicationData.value[numericJobId]) {
       applicationData.value[numericJobId] = []
     }
-    
+
     // Add the application to the job's applications
     applicationData.value[numericJobId].push({
       id: data[0]?.id || Date.now(),
@@ -445,16 +430,16 @@ async function handleApplicationSubmitted(application) {
       resume: application.resume,
       coverletter: application.coverletter,
       user_id: userId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
-    
+
     // Emit the application-submitted event
     emit('application-submitted', applicationWithTimestamp)
-    
+
     // Update the display mode to show "Applied Forms"
     selectedJob.value = jobs.value.find((job) => job.id === numericJobId)
     displayMode.value = 'appliedForms'
-    
+
     // Close the dialog after submission
     dialog.value = false
   } catch (err) {
@@ -477,63 +462,63 @@ function rateJob(job) {
 async function submitReview(jobId, review) {
   try {
     formAction.value.formProcess = true // Show loading state
-    
+
     // Get current user
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData?.user?.id
-    
+
     if (!userId) {
       alert('You must be logged in to submit a rating')
       formAction.value.formProcess = false
       return
     }
-    
+
     // Make sure jobId is a number
     const numericJobId = typeof jobId === 'string' ? parseInt(jobId, 10) : jobId
     console.log('Submitting rating for job ID:', numericJobId)
-    
+
     // Save rating to Supabase
     const { data, error } = await supabase
       .from('ratings')
       .insert([
         {
           user_id: userId,
-          job_id: numericJobId, // Add job_id to connect rating with job
+          job_id: jobId, // Add job_id to connect rating with job
           rating: review.rating,
           comment: review.comment,
-          rated_at: Math.floor(Date.now() / 1000) // Unix timestamp in seconds
-        }
+          rated_at: Math.floor(Date.now() / 1000), // Unix timestamp in seconds
+        },
       ])
       .select()
-    
+
     if (error) {
       console.error('Error saving rating to Supabase:', error)
       alert(`Error saving rating: ${error.message}`)
       return
     }
-    
+
     console.log('Rating saved to Supabase:', data)
-    
+
     // Also update local state for immediate UI feedback
     const defaultKey = 'all_ratings'
     if (!jobRatings.value[defaultKey]) {
       jobRatings.value[defaultKey] = []
     }
-    
+
     // Add the rating to the all_ratings array with the job_id
     jobRatings.value[defaultKey].push({
       id: data[0]?.id || Date.now(),
       rating: review.rating,
       comment: review.comment,
-      job_id: numericJobId, // Include job_id for filtering in getAverageRating
+      job_id: jobId, // Include job_id for filtering in getAverageRating
       user_id: userId,
       username: userData?.user?.email ? userData.user.email.split('@')[0] : 'Anonymous',
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
     })
-    
+
     // Close the rating dialog
     ratingDialog.value = false
-    
+
     // Update the display to show the reviews
     // Since we're no longer using job-specific ratings, we'll just show all ratings
     displayMode.value = 'reviews'
@@ -572,7 +557,6 @@ function contactApplicant(application) {
 
               <nav class="navigation-menu">
                 <ul>
-
                   <li>
                     <v-btn
                       rounded
@@ -800,18 +784,22 @@ function contactApplicant(application) {
                         <v-card-item>
                           <template v-slot:prepend>
                             <v-avatar color="grey-lighten-1" class="text-uppercase">
-                              {{ review.userId ? review.userId.substring(0, 2).toUpperCase() : 'A' }}
+                              {{
+                                review.userId ? review.userId.substring(0, 2).toUpperCase() : 'A'
+                              }}
                             </v-avatar>
                           </template>
                           <v-card-title class="text-body-1 font-weight-bold">
                             Anonymous User
                           </v-card-title>
                           <v-card-subtitle>
-                            {{ new Date().toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            }) }}
+                            {{
+                              new Date().toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            }}
                           </v-card-subtitle>
 
                           <template v-slot:append>
