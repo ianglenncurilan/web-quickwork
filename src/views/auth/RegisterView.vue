@@ -99,7 +99,6 @@ const handleRegister = async () => {
           <v-row no-gutters>
             <!-- Left Section - Sign Up Prompt -->
             <v-col
-
               cols="12"
               md="5"
               class="d-flex flex-column align-center justify-center new-here-section"
@@ -128,9 +127,9 @@ const handleRegister = async () => {
               <br />
               <v-col>
                 <AlertNotification
-                :formSuccessMessage="formAction.formSuccessMessage"
-                :formErrorMessage="formAction.formErrorMessage"
-              ></AlertNotification>
+                  :formSuccessMessage="formAction.formSuccessMessage"
+                  :formErrorMessage="formAction.formErrorMessage"
+                ></AlertNotification>
               </v-col>
               <v-form ref="refVform" fast-fail @submit.prevent="handleRegister">
                 <v-row>
@@ -155,7 +154,8 @@ const handleRegister = async () => {
                     ></v-text-field>
                   </v-col>
                 </v-row>
-                <v-text-field class="mt-1"
+                <v-text-field
+                  class="mt-1"
                   v-model="formData.email"
                   label="Email"
                   variant="outlined"
@@ -163,7 +163,8 @@ const handleRegister = async () => {
                   :rules="[requiredValidator, emailValidator]"
                 ></v-text-field>
 
-                <v-text-field class="mt-2"
+                <v-text-field
+                  class="mt-2"
                   v-model="formData.password"
                   label="Password"
                   :type="showPassword ? 'text' : 'password'"
@@ -174,7 +175,8 @@ const handleRegister = async () => {
                   @click:append-inner="togglePasswordVisibility('password')"
                 ></v-text-field>
 
-                <v-text-field class="mt-4"
+                <v-text-field
+                  class="mt-4"
                   v-model="formData.password_confirmation"
                   label="Password Confirmation"
                   :type="showPasswordConfirmation ? 'text' : 'password'"
@@ -218,7 +220,7 @@ const handleRegister = async () => {
   padding: 2rem;
   border-radius: 12px; /* Rounded corners */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
-  background-image: url('@/assets/qwkwrk.png'); /* Background image */
+  /* background-image: url('@/assets/qwkwrk.png');  */
   background-size: cover;
   background-position: center;
   text-align: center;
