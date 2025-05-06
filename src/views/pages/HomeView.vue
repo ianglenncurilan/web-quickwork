@@ -6,7 +6,7 @@ const theme = ref('light')
 function scrollToSection(id) {
   const element = document.getElementById(id)
   if (element) {
-    const yOffset = -70 
+    const yOffset = -70
     const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
     window.scrollTo({ top: y, behavior: 'smooth' })
   }
@@ -28,15 +28,7 @@ function scrollToSection(id) {
         <v-btn class="text-white" @click="scrollToSection('home')"> Home </v-btn>
         <v-btn class="text-white" @click="scrollToSection('feature')"> Feature </v-btn>
         <v-btn class="text-white" @click="scrollToSection('about')"> About </v-btn>
-        <v-btn class="text-white" @click="scrollToSection('faqs')"> FAQ </v-btn>
-
-        <v-btn icon>
-          <v-icon>mdi-heart</v-icon>
-        </v-btn>
-
-        <v-btn icon>
-          <v-icon>mdi-dots-vertical</v-icon>
-        </v-btn>
+        <v-btn class="text-white mr-3" @click="scrollToSection('faqs')"> FAQ </v-btn>
       </v-app-bar>
 
 
@@ -238,14 +230,14 @@ function scrollToSection(id) {
               QuickWork offers schedule-based filters, allowing you to search for jobs that fit your class schedule or preferred work hours. This ensures flexibility in finding the right job.
             </v-expansion-panel-text>
             </v-expansion-panel>
-      
+
       <!-- Panel 2 -->
       <v-expansion-panel style="background: linear-gradient(135deg, #328e6e, #a8dcc6); border-radius: 16px; margin-bottom: 10px;">
         <v-expansion-panel-title class="white--text">How does QuickWork track my job applications?</v-expansion-panel-title>
         <v-expansion-panel-text class="white--text">
           QuickWork has an application tracker that monitors the status of your job applications. You can easily view whether your application is pending, viewed, or hired.        </v-expansion-panel-text>
       </v-expansion-panel>
-      
+
       <!-- Panel 3 -->
       <v-expansion-panel style="background: linear-gradient(135deg, #328e6e, #a8dcc6); border-radius: 16px; margin-bottom: 10px;">
         <v-expansion-panel-title class="white--text">How do I sign up for QuickWork?</v-expansion-panel-title>
@@ -266,7 +258,7 @@ function scrollToSection(id) {
       <v-expansion-panel style="background: linear-gradient(135deg, #328e6e, #a8dcc6); border-radius: 16px; margin-bottom: 10px;">
         <v-expansion-panel-title class="white--text">How do I find jobs on QuickWork?</v-expansion-panel-title>
         <v-expansion-panel-text class="white--text">
-          Use the Smart Search feature to find jobs based on your skills, schedule, and preferences.        
+          Use the Smart Search feature to find jobs based on your skills, schedule, and preferences.
         </v-expansion-panel-text>
       </v-expansion-panel>
 

@@ -17,14 +17,6 @@ function toggleTheme() {
 
       <v-spacer></v-spacer>
 
-      <v-btn icon>
-        <v-icon>mdi-heart</v-icon>
-      </v-btn>
-
-      <v-btn icon>
-        <v-icon>mdi-dots-vertical</v-icon>
-      </v-btn>
-
       <v-btn
         :prepend-icon="theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night'"
         @click="toggleTheme"
